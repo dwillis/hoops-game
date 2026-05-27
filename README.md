@@ -1,6 +1,6 @@
 # Hoops: WBB Edition
 
-A terminal coaching simulator for women's college basketball, covering D-I teams from 2015-16 through 2025-26. Pick any team from any season, set your defensive and offensive schemes, manage substitutions and fatigue, and coach your way through single games, NCAA tournament brackets, or conference tournaments. Inspired by the original *Hoops* (1986) by Jeff Sagarin and Loren Winston.
+A terminal coaching simulator for women's college basketball, covering D-I teams from 2015-16 through 2025-26. Pick any team from any season, set your defensive and offensive schemes, manage substitutions and fatigue, and coach your way through single games, NCAA tournament brackets, or conference tournaments. Inspired by the [original *Hoops* (1986) by Jeff Sagarin and Wayne Winston](https://en.wikipedia.org/wiki/Hoops_(1986_video_game)).
 
 Built with real play-by-play data from ESPN via the sportsdataverse ecosystem.
 
