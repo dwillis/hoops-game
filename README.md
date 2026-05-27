@@ -6,12 +6,17 @@ Built with real play-by-play data from ESPN via the sportsdataverse ecosystem.
 
 ![Hoops gameplay screenshot](game.png)
 
-## Requirements
+## Download
 
-- Python 3.11+
-- [uv](https://docs.astral.sh/uv/) (recommended) or pip
+Pre-built executables for macOS, Windows, and Linux are available on the [Releases page](https://github.com/dwillis/hoops-game/releases). No Python installation required — download, make it executable if needed, and run:
 
-## Install
+```bash
+./hoops play
+```
+
+## Install from Source
+
+Requires Python 3.11+ and [uv](https://docs.astral.sh/uv/) (recommended) or pip.
 
 ```bash
 git clone https://github.com/dwillis/hoops-game.git
