@@ -4,7 +4,7 @@ version = "0.0.1"
 description = "Terminal coaching simulator for women's college basketball, 2015-16 onward."
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "Non-commercial fan project; see README." }
+license = { text = "MIT" }
 authors = [{ name = "Derek Willis" }]
 
 dependencies = [
