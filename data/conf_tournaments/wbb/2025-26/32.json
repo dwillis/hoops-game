@@ -1,0 +1,97 @@
+{
+  "season": "2025-26",
+  "tournament_id": 32,
+  "conference_name": "Summit League Championship",
+  "num_teams": 9,
+  "regions": [],
+  "games": [
+    {
+      "game_id": 401851724,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2437,
+      "away_team_id": 155,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401851725,
+      "round": 2,
+      "region": null,
+      "home_team_id": 2571,
+      "away_team_id": 140,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401851728,
+      "round": 2,
+      "region": null,
+      "home_team_id": 2449,
+      "away_team_id": 2437,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401851727,
+      "round": 2,
+      "region": null,
+      "home_team_id": 233,
+      "away_team_id": 2172,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401851729,
+      "round": 2,
+      "region": null,
+      "home_team_id": 198,
+      "away_team_id": 2900,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401851730,
+      "round": 3,
+      "region": null,
+      "home_team_id": 2449,
+      "away_team_id": 2900,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401851731,
+      "round": 3,
+      "region": null,
+      "home_team_id": 2571,
+      "away_team_id": 233,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401851732,
+      "round": 4,
+      "region": null,
+      "home_team_id": 2449,
+      "away_team_id": 2571,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    }
+  ]
+}

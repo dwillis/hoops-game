@@ -1,0 +1,86 @@
+{
+  "season": "2022-23",
+  "tournament_id": 23,
+  "conference_name": "Northeast Conference Tournament",
+  "num_teams": 8,
+  "regions": [],
+  "games": [
+    {
+      "game_id": 401513657,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2597,
+      "away_team_id": 2681,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513658,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2771,
+      "away_team_id": 2598,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513659,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2529,
+      "away_team_id": 112358,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513660,
+      "round": 1,
+      "region": null,
+      "home_team_id": 161,
+      "away_team_id": 2115,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513661,
+      "round": 2,
+      "region": null,
+      "home_team_id": 2529,
+      "away_team_id": 2771,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513662,
+      "round": 2,
+      "region": null,
+      "home_team_id": 161,
+      "away_team_id": 2597,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513663,
+      "round": 3,
+      "region": null,
+      "home_team_id": 161,
+      "away_team_id": 2529,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    }
+  ]
+}

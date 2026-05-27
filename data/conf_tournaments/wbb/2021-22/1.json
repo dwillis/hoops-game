@@ -1,0 +1,42 @@
+{
+  "season": "2021-22",
+  "tournament_id": 1,
+  "conference_name": "America East Playoffs",
+  "num_teams": 4,
+  "regions": [],
+  "games": [
+    {
+      "game_id": 401408511,
+      "round": 1,
+      "region": null,
+      "home_team_id": 399,
+      "away_team_id": 261,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401408512,
+      "round": 1,
+      "region": null,
+      "home_team_id": 311,
+      "away_team_id": 2885,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401408513,
+      "round": 2,
+      "region": null,
+      "home_team_id": 311,
+      "away_team_id": 399,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    }
+  ]
+}

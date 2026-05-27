@@ -1,0 +1,86 @@
+{
+  "season": "2015-16",
+  "tournament_id": 29,
+  "conference_name": "SOUTHERN CONFERENCE WOMEN'S CHAMPIONSHIP",
+  "num_teams": 8,
+  "regions": [],
+  "games": [
+    {
+      "game_id": 400868335,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2382,
+      "away_team_id": 2430,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 400868336,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2193,
+      "away_team_id": 231,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 400868337,
+      "round": 1,
+      "region": null,
+      "home_team_id": 236,
+      "away_team_id": 2717,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 400868338,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2535,
+      "away_team_id": 2747,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 400869876,
+      "round": 2,
+      "region": null,
+      "home_team_id": 2382,
+      "away_team_id": 231,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 400869910,
+      "round": 2,
+      "region": null,
+      "home_team_id": 236,
+      "away_team_id": 2535,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 400869956,
+      "round": 3,
+      "region": null,
+      "home_team_id": 2382,
+      "away_team_id": 236,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    }
+  ]
+}

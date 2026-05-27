@@ -1,0 +1,86 @@
+{
+  "season": "2025-26",
+  "tournament_id": 23,
+  "conference_name": "Northeast Conference Tournament",
+  "num_teams": 8,
+  "regions": [],
+  "games": [
+    {
+      "game_id": 401851550,
+      "round": 1,
+      "region": null,
+      "home_team_id": 161,
+      "away_team_id": 2598,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401851551,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2681,
+      "away_team_id": 2330,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401851552,
+      "round": 1,
+      "region": null,
+      "home_team_id": 112358,
+      "away_team_id": 2130,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401851553,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2385,
+      "away_team_id": 284,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401851554,
+      "round": 2,
+      "region": null,
+      "home_team_id": 161,
+      "away_team_id": 2330,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401851555,
+      "round": 2,
+      "region": null,
+      "home_team_id": 2385,
+      "away_team_id": 112358,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401851556,
+      "round": 3,
+      "region": null,
+      "home_team_id": 161,
+      "away_team_id": 112358,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    }
+  ]
+}

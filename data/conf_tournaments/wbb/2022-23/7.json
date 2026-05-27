@@ -1,0 +1,86 @@
+{
+  "season": "2022-23",
+  "tournament_id": 7,
+  "conference_name": "Big Sky Championship",
+  "num_teams": 9,
+  "regions": [],
+  "games": [
+    {
+      "game_id": 401524084,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2458,
+      "away_team_id": 2692,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401524085,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2502,
+      "away_team_id": 304,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401524088,
+      "round": 2,
+      "region": null,
+      "home_team_id": 331,
+      "away_team_id": 149,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401524089,
+      "round": 2,
+      "region": null,
+      "home_team_id": 16,
+      "away_team_id": 70,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401524090,
+      "round": 3,
+      "region": null,
+      "home_team_id": 2464,
+      "away_team_id": 331,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401524091,
+      "round": 3,
+      "region": null,
+      "home_team_id": 16,
+      "away_team_id": 2502,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401524092,
+      "round": 4,
+      "region": null,
+      "home_team_id": 2464,
+      "away_team_id": 16,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    }
+  ]
+}

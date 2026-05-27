@@ -1,0 +1,86 @@
+{
+  "season": "2015-16",
+  "tournament_id": 1,
+  "conference_name": "AMERICA EAST WOMEN'S CHAMPIONSHIP",
+  "num_teams": 8,
+  "regions": [],
+  "games": [
+    {
+      "game_id": 400868405,
+      "round": 1,
+      "region": null,
+      "home_team_id": 399,
+      "away_team_id": 261,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 400868406,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2066,
+      "away_team_id": 2378,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 400868407,
+      "round": 1,
+      "region": null,
+      "home_team_id": 311,
+      "away_team_id": 160,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 400868408,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2619,
+      "away_team_id": 42,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 400869999,
+      "round": 2,
+      "region": null,
+      "home_team_id": 311,
+      "away_team_id": 2619,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 400870199,
+      "round": 2,
+      "region": null,
+      "home_team_id": 2066,
+      "away_team_id": 399,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 400870288,
+      "round": 3,
+      "region": null,
+      "home_team_id": 399,
+      "away_team_id": 311,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    }
+  ]
+}

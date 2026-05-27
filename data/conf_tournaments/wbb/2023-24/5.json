@@ -1,0 +1,152 @@
+{
+  "season": "2023-24",
+  "tournament_id": 5,
+  "conference_name": "Phillips 66 Big 12 Championship",
+  "num_teams": 14,
+  "regions": [],
+  "games": [
+    {
+      "game_id": 401629266,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2641,
+      "away_team_id": 248,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401629267,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2132,
+      "away_team_id": 2116,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401629268,
+      "round": 2,
+      "region": null,
+      "home_team_id": 239,
+      "away_team_id": 2641,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401629269,
+      "round": 2,
+      "region": null,
+      "home_team_id": 197,
+      "away_team_id": 2628,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401629270,
+      "round": 2,
+      "region": null,
+      "home_team_id": 2305,
+      "away_team_id": 252,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401629271,
+      "round": 2,
+      "region": null,
+      "home_team_id": 277,
+      "away_team_id": 2132,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401629272,
+      "round": 3,
+      "region": null,
+      "home_team_id": 66,
+      "away_team_id": 239,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401629273,
+      "round": 3,
+      "region": null,
+      "home_team_id": 201,
+      "away_team_id": 2628,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401629274,
+      "round": 3,
+      "region": null,
+      "home_team_id": 251,
+      "away_team_id": 2305,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401629275,
+      "round": 3,
+      "region": null,
+      "home_team_id": 2306,
+      "away_team_id": 277,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401629276,
+      "round": 4,
+      "region": null,
+      "home_team_id": 201,
+      "away_team_id": 66,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401629278,
+      "round": 4,
+      "region": null,
+      "home_team_id": 251,
+      "away_team_id": 2306,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401629279,
+      "round": 5,
+      "region": null,
+      "home_team_id": 251,
+      "away_team_id": 66,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    }
+  ]
+}

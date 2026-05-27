@@ -1,0 +1,86 @@
+{
+  "season": "2022-23",
+  "tournament_id": 36,
+  "conference_name": "Hercules Tires WAC Tournament",
+  "num_teams": 12,
+  "regions": [],
+  "games": [
+    {
+      "game_id": 401513724,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2000,
+      "away_team_id": 2534,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513725,
+      "round": 1,
+      "region": null,
+      "home_team_id": 3101,
+      "away_team_id": 3084,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513726,
+      "round": 1,
+      "region": null,
+      "home_team_id": 250,
+      "away_team_id": 2547,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513727,
+      "round": 1,
+      "region": null,
+      "home_team_id": 166,
+      "away_team_id": 292,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513732,
+      "round": 2,
+      "region": null,
+      "home_team_id": 2617,
+      "away_team_id": 2856,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513733,
+      "round": 2,
+      "region": null,
+      "home_team_id": 253,
+      "away_team_id": 2253,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513734,
+      "round": 3,
+      "region": null,
+      "home_team_id": 253,
+      "away_team_id": 2856,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    }
+  ]
+}

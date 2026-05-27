@@ -1,0 +1,86 @@
+{
+  "season": "2022-23",
+  "tournament_id": 24,
+  "conference_name": "OVC Championship pres. by United Fidelity Bank",
+  "num_teams": 8,
+  "regions": [],
+  "games": [
+    {
+      "game_id": 401513664,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2630,
+      "away_team_id": 2413,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513665,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2565,
+      "away_team_id": 2634,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513666,
+      "round": 2,
+      "region": null,
+      "home_team_id": 2546,
+      "away_team_id": 2413,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513667,
+      "round": 2,
+      "region": null,
+      "home_team_id": 2635,
+      "away_team_id": 2565,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513668,
+      "round": 3,
+      "region": null,
+      "home_team_id": 2031,
+      "away_team_id": 2546,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513669,
+      "round": 3,
+      "region": null,
+      "home_team_id": 2197,
+      "away_team_id": 2635,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513670,
+      "round": 4,
+      "region": null,
+      "home_team_id": 2031,
+      "away_team_id": 2635,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    }
+  ]
+}

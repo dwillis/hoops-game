@@ -1,0 +1,119 @@
+{
+  "season": "2025-26",
+  "tournament_id": 19,
+  "conference_name": "MVC Tournament",
+  "num_teams": 11,
+  "regions": [],
+  "games": [
+    {
+      "game_id": 401851506,
+      "round": 1,
+      "region": null,
+      "home_team_id": 79,
+      "away_team_id": 282,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401851507,
+      "round": 1,
+      "region": null,
+      "home_team_id": 82,
+      "away_team_id": 339,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401851508,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2181,
+      "away_team_id": 2674,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401851509,
+      "round": 2,
+      "region": null,
+      "home_team_id": 93,
+      "away_team_id": 282,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401851510,
+      "round": 2,
+      "region": null,
+      "home_team_id": 2460,
+      "away_team_id": 71,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401851511,
+      "round": 2,
+      "region": null,
+      "home_team_id": 2057,
+      "away_team_id": 339,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401851512,
+      "round": 2,
+      "region": null,
+      "home_team_id": 2287,
+      "away_team_id": 2181,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401851518,
+      "round": 3,
+      "region": null,
+      "home_team_id": 93,
+      "away_team_id": 2460,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401851520,
+      "round": 3,
+      "region": null,
+      "home_team_id": 2287,
+      "away_team_id": 339,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401851522,
+      "round": 4,
+      "region": null,
+      "home_team_id": 93,
+      "away_team_id": 339,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    }
+  ]
+}

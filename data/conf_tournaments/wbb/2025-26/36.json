@@ -1,0 +1,75 @@
+{
+  "season": "2025-26",
+  "tournament_id": 36,
+  "conference_name": "WAC Tournament",
+  "num_teams": 7,
+  "regions": [],
+  "games": [
+    {
+      "game_id": 401851774,
+      "round": 1,
+      "region": null,
+      "home_team_id": 250,
+      "away_team_id": 3101,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401851775,
+      "round": 2,
+      "region": null,
+      "home_team_id": 3084,
+      "away_team_id": 2627,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401851776,
+      "round": 2,
+      "region": null,
+      "home_team_id": 253,
+      "away_team_id": 250,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401851777,
+      "round": 3,
+      "region": null,
+      "home_team_id": 2856,
+      "away_team_id": 2627,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401851818,
+      "round": 3,
+      "region": null,
+      "home_team_id": 2000,
+      "away_team_id": 250,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401851819,
+      "round": 4,
+      "region": null,
+      "home_team_id": 2856,
+      "away_team_id": 2000,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    }
+  ]
+}

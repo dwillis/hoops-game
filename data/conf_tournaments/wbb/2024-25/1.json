@@ -1,0 +1,75 @@
+{
+  "season": "2024-25",
+  "tournament_id": 1,
+  "conference_name": "America East Playoffs",
+  "num_teams": 8,
+  "regions": [],
+  "games": [
+    {
+      "game_id": 401745896,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2803,
+      "away_team_id": 2066,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401745897,
+      "round": 1,
+      "region": null,
+      "home_team_id": 311,
+      "away_team_id": 2885,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401745898,
+      "round": 1,
+      "region": null,
+      "home_team_id": 261,
+      "away_team_id": 2378,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401745899,
+      "round": 1,
+      "region": null,
+      "home_team_id": 399,
+      "away_team_id": 160,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401745900,
+      "round": 2,
+      "region": null,
+      "home_team_id": 261,
+      "away_team_id": 2803,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401745901,
+      "round": 2,
+      "region": null,
+      "home_team_id": 399,
+      "away_team_id": 311,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    }
+  ]
+}

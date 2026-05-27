@@ -1,0 +1,108 @@
+{
+  "season": "2015-16",
+  "tournament_id": 6,
+  "conference_name": "BIG EAST WOMEN'S CHAMPIONSHIP",
+  "num_teams": 10,
+  "regions": [],
+  "games": [
+    {
+      "game_id": 400868382,
+      "round": 1,
+      "region": null,
+      "home_team_id": 156,
+      "away_team_id": 2507,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 400868383,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2752,
+      "away_team_id": 2086,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 400868384,
+      "round": 2,
+      "region": null,
+      "home_team_id": 2550,
+      "away_team_id": 269,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 400868385,
+      "round": 2,
+      "region": null,
+      "home_team_id": 2599,
+      "away_team_id": 46,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 400870007,
+      "round": 2,
+      "region": null,
+      "home_team_id": 222,
+      "away_team_id": 156,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 400870177,
+      "round": 2,
+      "region": null,
+      "home_team_id": 305,
+      "away_team_id": 2086,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 400870292,
+      "round": 3,
+      "region": null,
+      "home_team_id": 2550,
+      "away_team_id": 156,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 400870357,
+      "round": 3,
+      "region": null,
+      "home_team_id": 305,
+      "away_team_id": 2599,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 400870532,
+      "round": 4,
+      "region": null,
+      "home_team_id": 2599,
+      "away_team_id": 156,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    }
+  ]
+}

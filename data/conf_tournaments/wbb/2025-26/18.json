@@ -1,0 +1,86 @@
+{
+  "season": "2025-26",
+  "tournament_id": 18,
+  "conference_name": "MEAC Tournament",
+  "num_teams": 8,
+  "regions": [],
+  "games": [
+    {
+      "game_id": 401851478,
+      "round": 1,
+      "region": null,
+      "home_team_id": 47,
+      "away_team_id": 2569,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401851479,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2379,
+      "away_team_id": 2169,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401851480,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2154,
+      "away_team_id": 2428,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401851481,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2450,
+      "away_team_id": 2415,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401851482,
+      "round": 2,
+      "region": null,
+      "home_team_id": 47,
+      "away_team_id": 2154,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401851483,
+      "round": 2,
+      "region": null,
+      "home_team_id": 2379,
+      "away_team_id": 2450,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401851484,
+      "round": 3,
+      "region": null,
+      "home_team_id": 47,
+      "away_team_id": 2450,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    }
+  ]
+}

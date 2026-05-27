@@ -1,0 +1,31 @@
+{
+  "season": "2024-25",
+  "tournament_id": 30,
+  "conference_name": "Southland Tournament",
+  "num_teams": 4,
+  "regions": [],
+  "games": [
+    {
+      "game_id": 401745887,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2466,
+      "away_team_id": 357,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401745888,
+      "round": 1,
+      "region": null,
+      "home_team_id": 292,
+      "away_team_id": 2447,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    }
+  ]
+}

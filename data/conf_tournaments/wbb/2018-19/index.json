@@ -1,0 +1,35 @@
+{
+  "season": "2018-19",
+  "conferences": [
+    {
+      "tournament_id": 3,
+      "conference_name": "ACC WOMEN'S TOURNAMENT",
+      "num_teams": 15,
+      "num_games": 14
+    },
+    {
+      "tournament_id": 5,
+      "conference_name": "BIG 12 WOMEN'S CHAMPIONSHIP",
+      "num_teams": 10,
+      "num_games": 9
+    },
+    {
+      "tournament_id": 9,
+      "conference_name": "BIG TEN WOMEN'S TOURNAMENT",
+      "num_teams": 14,
+      "num_games": 13
+    },
+    {
+      "tournament_id": 26,
+      "conference_name": "PAC-12 WOMEN'S TOURNAMENT PRES. BY NEW YORK LIFE",
+      "num_teams": 12,
+      "num_games": 11
+    },
+    {
+      "tournament_id": 28,
+      "conference_name": "SEC WOMEN'S TOURNAMENT",
+      "num_teams": 14,
+      "num_games": 13
+    }
+  ]
+}

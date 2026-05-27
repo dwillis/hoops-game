@@ -1,0 +1,185 @@
+{
+  "season": "2015-16",
+  "conferences": [
+    {
+      "tournament_id": 1,
+      "conference_name": "AMERICA EAST WOMEN'S CHAMPIONSHIP",
+      "num_teams": 8,
+      "num_games": 7
+    },
+    {
+      "tournament_id": 2,
+      "conference_name": "ATLANTIC 10 WOMEN'S CHAMPIONSHIP",
+      "num_teams": 14,
+      "num_games": 13
+    },
+    {
+      "tournament_id": 3,
+      "conference_name": "ACC WOMEN'S TOURNAMENT",
+      "num_teams": 15,
+      "num_games": 14
+    },
+    {
+      "tournament_id": 4,
+      "conference_name": "ATLANTIC SUN WOMEN'S CHAMPIONSHIP",
+      "num_teams": 8,
+      "num_games": 7
+    },
+    {
+      "tournament_id": 5,
+      "conference_name": "PHILLIPS 66 BIG 12 WOMEN'S CHAMPIONSHIP",
+      "num_teams": 10,
+      "num_games": 9
+    },
+    {
+      "tournament_id": 6,
+      "conference_name": "BIG EAST WOMEN'S CHAMPIONSHIP",
+      "num_teams": 10,
+      "num_games": 9
+    },
+    {
+      "tournament_id": 7,
+      "conference_name": "BIG SKY WOMEN'S CHAMPIONSHIP",
+      "num_teams": 12,
+      "num_games": 11
+    },
+    {
+      "tournament_id": 8,
+      "conference_name": "BIG SOUTH WOMEN'S CHAMPIONSHIP",
+      "num_teams": 11,
+      "num_games": 10
+    },
+    {
+      "tournament_id": 9,
+      "conference_name": "BIG TEN WOMEN'S TOURNAMENT",
+      "num_teams": 14,
+      "num_games": 13
+    },
+    {
+      "tournament_id": 10,
+      "conference_name": "BIG WEST CONFERENCE WOMEN'S TOURNAMENT",
+      "num_teams": 8,
+      "num_games": 7
+    },
+    {
+      "tournament_id": 11,
+      "conference_name": "CAA WOMEN'S CHAMPIONSHIP",
+      "num_teams": 10,
+      "num_games": 9
+    },
+    {
+      "tournament_id": 12,
+      "conference_name": "C-USA WOMEN'S CHAMPIONSHIP",
+      "num_teams": 14,
+      "num_games": 13
+    },
+    {
+      "tournament_id": 14,
+      "conference_name": "HORIZON LEAGUE WOMEN'S CHAMPIONSHIP",
+      "num_teams": 10,
+      "num_games": 9
+    },
+    {
+      "tournament_id": 15,
+      "conference_name": "MAAC WOMEN'S CHAMPIONSHIP",
+      "num_teams": 11,
+      "num_games": 10
+    },
+    {
+      "tournament_id": 16,
+      "conference_name": "MAC WOMEN'S TOURNAMENT",
+      "num_teams": 9,
+      "num_games": 7
+    },
+    {
+      "tournament_id": 18,
+      "conference_name": "MEAC WOMEN'S TOURNAMENT",
+      "num_teams": 13,
+      "num_games": 12
+    },
+    {
+      "tournament_id": 19,
+      "conference_name": "MVC WOMEN'S TOURNAMENT",
+      "num_teams": 10,
+      "num_games": 9
+    },
+    {
+      "tournament_id": 20,
+      "conference_name": "MOUNTAIN WEST WOMEN'S CHAMPIONSHIP",
+      "num_teams": 11,
+      "num_games": 10
+    },
+    {
+      "tournament_id": 23,
+      "conference_name": "NORTHEAST CONFERENCE WOMEN'S TOURNAMENT",
+      "num_teams": 8,
+      "num_games": 7
+    },
+    {
+      "tournament_id": 24,
+      "conference_name": "OHIO VALLEY CONFERENCE WOMEN'S TOURNAMENT",
+      "num_teams": 8,
+      "num_games": 7
+    },
+    {
+      "tournament_id": 26,
+      "conference_name": "PAC-12 WOMEN'S TOURNAMENT",
+      "num_teams": 12,
+      "num_games": 11
+    },
+    {
+      "tournament_id": 28,
+      "conference_name": "SEC WOMEN'S TOURNAMENT",
+      "num_teams": 14,
+      "num_games": 13
+    },
+    {
+      "tournament_id": 29,
+      "conference_name": "SOUTHERN CONFERENCE WOMEN'S CHAMPIONSHIP",
+      "num_teams": 8,
+      "num_games": 7
+    },
+    {
+      "tournament_id": 30,
+      "conference_name": "SOUTHLAND WOMEN'S TOURNAMENT",
+      "num_teams": 8,
+      "num_games": 7
+    },
+    {
+      "tournament_id": 31,
+      "conference_name": "SWAC WOMEN'S TOURNAMENT",
+      "num_teams": 10,
+      "num_games": 9
+    },
+    {
+      "tournament_id": 32,
+      "conference_name": "SUMMIT LEAGUE WOMEN'S CHAMPIONSHIP",
+      "num_teams": 8,
+      "num_games": 7
+    },
+    {
+      "tournament_id": 34,
+      "conference_name": "SUN BELT CONFERENCE WOMEN'S CHAMPIONSHIP",
+      "num_teams": 8,
+      "num_games": 7
+    },
+    {
+      "tournament_id": 35,
+      "conference_name": "WEST COAST CONFERENCE WOMEN'S TOURNAMENT",
+      "num_teams": 10,
+      "num_games": 9
+    },
+    {
+      "tournament_id": 36,
+      "conference_name": "WAC WOMEN'S TOURNAMENT",
+      "num_teams": 7,
+      "num_games": 6
+    },
+    {
+      "tournament_id": 39,
+      "conference_name": "THE AMERICAN WOMEN'S CHAMPIONSHIP",
+      "num_teams": 11,
+      "num_games": 10
+    }
+  ]
+}

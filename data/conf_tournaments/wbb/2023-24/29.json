@@ -1,0 +1,86 @@
+{
+  "season": "2023-24",
+  "tournament_id": 29,
+  "conference_name": "SoCon Championship",
+  "num_teams": 8,
+  "regions": [],
+  "games": [
+    {
+      "game_id": 401629647,
+      "round": 1,
+      "region": null,
+      "home_team_id": 236,
+      "away_team_id": 2717,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401629648,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2430,
+      "away_team_id": 231,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401629649,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2747,
+      "away_team_id": 2535,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401629650,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2382,
+      "away_team_id": 2193,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401629651,
+      "round": 2,
+      "region": null,
+      "home_team_id": 236,
+      "away_team_id": 2382,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401629652,
+      "round": 2,
+      "region": null,
+      "home_team_id": 2430,
+      "away_team_id": 2747,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401629653,
+      "round": 3,
+      "region": null,
+      "home_team_id": 236,
+      "away_team_id": 2430,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    }
+  ]
+}

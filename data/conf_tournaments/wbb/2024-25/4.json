@@ -1,0 +1,75 @@
+{
+  "season": "2024-25",
+  "tournament_id": 4,
+  "conference_name": "ASUN Championship",
+  "num_teams": 10,
+  "regions": [],
+  "games": [
+    {
+      "game_id": 401743786,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2698,
+      "away_team_id": 2046,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401743787,
+      "round": 1,
+      "region": null,
+      "home_team_id": 294,
+      "away_team_id": 91,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401743788,
+      "round": 2,
+      "region": null,
+      "home_team_id": 526,
+      "away_team_id": 2046,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401743789,
+      "round": 2,
+      "region": null,
+      "home_team_id": 2198,
+      "away_team_id": 56,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401743790,
+      "round": 2,
+      "region": null,
+      "home_team_id": 288,
+      "away_team_id": 2453,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401743791,
+      "round": 2,
+      "region": null,
+      "home_team_id": 2110,
+      "away_team_id": 91,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    }
+  ]
+}

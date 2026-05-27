@@ -1,0 +1,86 @@
+{
+  "season": "2025-26",
+  "tournament_id": 24,
+  "conference_name": "OVC Championship",
+  "num_teams": 8,
+  "regions": [],
+  "games": [
+    {
+      "game_id": 401851572,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2031,
+      "away_team_id": 2546,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401851573,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2630,
+      "away_team_id": 2565,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401851574,
+      "round": 2,
+      "region": null,
+      "home_team_id": 2413,
+      "away_team_id": 2546,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401851575,
+      "round": 2,
+      "region": null,
+      "home_team_id": 88,
+      "away_team_id": 2565,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401851576,
+      "round": 3,
+      "region": null,
+      "home_team_id": 2710,
+      "away_team_id": 2546,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401851577,
+      "round": 3,
+      "region": null,
+      "home_team_id": 2815,
+      "away_team_id": 88,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401851578,
+      "round": 4,
+      "region": null,
+      "home_team_id": 2710,
+      "away_team_id": 2815,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    }
+  ]
+}

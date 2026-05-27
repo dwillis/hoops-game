@@ -1,0 +1,53 @@
+{
+  "season": "2024-25",
+  "tournament_id": 23,
+  "conference_name": "Northeast Conference Tournament",
+  "num_teams": 8,
+  "regions": [],
+  "games": [
+    {
+      "game_id": 401744053,
+      "round": 1,
+      "region": null,
+      "home_team_id": 161,
+      "away_team_id": 112358,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401744054,
+      "round": 1,
+      "region": null,
+      "home_team_id": 284,
+      "away_team_id": 2681,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401744055,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2115,
+      "away_team_id": 2130,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401744057,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2598,
+      "away_team_id": 2330,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    }
+  ]
+}

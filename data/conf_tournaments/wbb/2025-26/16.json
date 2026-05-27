@@ -1,0 +1,86 @@
+{
+  "season": "2025-26",
+  "tournament_id": 16,
+  "conference_name": "MAC Championship",
+  "num_teams": 8,
+  "regions": [],
+  "games": [
+    {
+      "game_id": 401856460,
+      "round": 1,
+      "region": null,
+      "home_team_id": 193,
+      "away_team_id": 2309,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401856461,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2117,
+      "away_team_id": 195,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401856462,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2050,
+      "away_team_id": 189,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401856463,
+      "round": 1,
+      "region": null,
+      "home_team_id": 113,
+      "away_team_id": 2649,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401856464,
+      "round": 2,
+      "region": null,
+      "home_team_id": 193,
+      "away_team_id": 195,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401856465,
+      "round": 2,
+      "region": null,
+      "home_team_id": 2050,
+      "away_team_id": 2649,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401856466,
+      "round": 3,
+      "region": null,
+      "home_team_id": 193,
+      "away_team_id": 2649,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    }
+  ]
+}

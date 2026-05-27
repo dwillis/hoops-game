@@ -1,0 +1,131 @@
+{
+  "season": "2024-25",
+  "conferences": [
+    {
+      "tournament_id": 1,
+      "conference_name": "America East Playoffs",
+      "num_teams": 8,
+      "num_games": 6
+    },
+    {
+      "tournament_id": 2,
+      "conference_name": "Atlantic 10 Championship",
+      "num_teams": 15,
+      "num_games": 14
+    },
+    {
+      "tournament_id": 3,
+      "conference_name": "Ally ACC Tournament",
+      "num_teams": 15,
+      "num_games": 14
+    },
+    {
+      "tournament_id": 4,
+      "conference_name": "ASUN Championship",
+      "num_teams": 10,
+      "num_games": 6
+    },
+    {
+      "tournament_id": 5,
+      "conference_name": "Phillips 66 Big 12 Championship",
+      "num_teams": 16,
+      "num_games": 15
+    },
+    {
+      "tournament_id": 6,
+      "conference_name": "Big East Tournament",
+      "num_teams": 11,
+      "num_games": 10
+    },
+    {
+      "tournament_id": 7,
+      "conference_name": "Big Sky Championship",
+      "num_teams": 10,
+      "num_games": 6
+    },
+    {
+      "tournament_id": 8,
+      "conference_name": "Big South Championship",
+      "num_teams": 9,
+      "num_games": 8
+    },
+    {
+      "tournament_id": 9,
+      "conference_name": "Big Ten Tournament",
+      "num_teams": 15,
+      "num_games": 14
+    },
+    {
+      "tournament_id": 14,
+      "conference_name": "Barbasol Horizon League Championship",
+      "num_teams": 8,
+      "num_games": 6
+    },
+    {
+      "tournament_id": 20,
+      "conference_name": "Mountain West Championship",
+      "num_teams": 11,
+      "num_games": 7
+    },
+    {
+      "tournament_id": 23,
+      "conference_name": "Northeast Conference Tournament",
+      "num_teams": 8,
+      "num_games": 4
+    },
+    {
+      "tournament_id": 24,
+      "conference_name": "OVC Championship",
+      "num_teams": 8,
+      "num_games": 7
+    },
+    {
+      "tournament_id": 27,
+      "conference_name": "Patriot League Championship",
+      "num_teams": 10,
+      "num_games": 6
+    },
+    {
+      "tournament_id": 28,
+      "conference_name": "SEC Tournament",
+      "num_teams": 16,
+      "num_games": 15
+    },
+    {
+      "tournament_id": 29,
+      "conference_name": "SoCon Championship",
+      "num_teams": 8,
+      "num_games": 7
+    },
+    {
+      "tournament_id": 30,
+      "conference_name": "Southland Tournament",
+      "num_teams": 4,
+      "num_games": 2
+    },
+    {
+      "tournament_id": 32,
+      "conference_name": "Summit League Championship",
+      "num_teams": 9,
+      "num_games": 8
+    },
+    {
+      "tournament_id": 33,
+      "conference_name": "Sun Belt Championship",
+      "num_teams": 12,
+      "num_games": 11
+    },
+    {
+      "tournament_id": 35,
+      "conference_name": "West Coast Conference Tournament",
+      "num_teams": 11,
+      "num_games": 9
+    },
+    {
+      "tournament_id": 39,
+      "conference_name": "American Athletic Conference Championship",
+      "num_teams": 13,
+      "num_games": 9
+    }
+  ]
+}

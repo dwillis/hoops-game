@@ -1,0 +1,75 @@
+{
+  "season": "2021-22",
+  "tournament_id": 38,
+  "conference_name": "WBI Tournament",
+  "num_teams": 8,
+  "regions": [],
+  "games": [
+    {
+      "game_id": 401415939,
+      "round": 3,
+      "region": null,
+      "home_team_id": 189,
+      "away_team_id": 231,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401415940,
+      "round": 3,
+      "region": null,
+      "home_team_id": 2608,
+      "away_team_id": 2046,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401415941,
+      "round": 3,
+      "region": null,
+      "home_team_id": 325,
+      "away_team_id": 111,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401415942,
+      "round": 3,
+      "region": null,
+      "home_team_id": 2166,
+      "away_team_id": 2440,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401415943,
+      "round": 4,
+      "region": null,
+      "home_team_id": 189,
+      "away_team_id": 2608,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401415944,
+      "round": 4,
+      "region": null,
+      "home_team_id": 2440,
+      "away_team_id": 325,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    }
+  ]
+}

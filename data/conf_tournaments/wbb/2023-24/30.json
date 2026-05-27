@@ -1,0 +1,86 @@
+{
+  "season": "2023-24",
+  "tournament_id": 30,
+  "conference_name": "Southland Tournament",
+  "num_teams": 8,
+  "regions": [],
+  "games": [
+    {
+      "game_id": 401629654,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2443,
+      "away_team_id": 2447,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401629655,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2837,
+      "away_team_id": 2466,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401629656,
+      "round": 2,
+      "region": null,
+      "home_team_id": 2545,
+      "away_team_id": 2447,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401629657,
+      "round": 2,
+      "region": null,
+      "home_team_id": 2916,
+      "away_team_id": 2837,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401629658,
+      "round": 3,
+      "region": null,
+      "home_team_id": 357,
+      "away_team_id": 2545,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401629659,
+      "round": 3,
+      "region": null,
+      "home_team_id": 2320,
+      "away_team_id": 2837,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401629660,
+      "round": 4,
+      "region": null,
+      "home_team_id": 2320,
+      "away_team_id": 357,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    }
+  ]
+}

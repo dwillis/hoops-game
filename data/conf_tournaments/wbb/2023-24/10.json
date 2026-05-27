@@ -1,0 +1,86 @@
+{
+  "season": "2023-24",
+  "tournament_id": 10,
+  "conference_name": "Big West Conference Championship",
+  "num_teams": 8,
+  "regions": [],
+  "games": [
+    {
+      "game_id": 401629334,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2540,
+      "away_team_id": 299,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401629335,
+      "round": 1,
+      "region": null,
+      "home_team_id": 302,
+      "away_team_id": 2239,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401629336,
+      "round": 2,
+      "region": null,
+      "home_team_id": 13,
+      "away_team_id": 302,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401629337,
+      "round": 2,
+      "region": null,
+      "home_team_id": 27,
+      "away_team_id": 299,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401629338,
+      "round": 3,
+      "region": null,
+      "home_team_id": 300,
+      "away_team_id": 299,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401629339,
+      "round": 3,
+      "region": null,
+      "home_team_id": 62,
+      "away_team_id": 302,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401629340,
+      "round": 4,
+      "region": null,
+      "home_team_id": 300,
+      "away_team_id": 302,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    }
+  ]
+}

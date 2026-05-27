@@ -1,0 +1,108 @@
+{
+  "season": "2022-23",
+  "tournament_id": 27,
+  "conference_name": "PenFed Credit Union Patriot League Championship",
+  "num_teams": 10,
+  "regions": [],
+  "games": [
+    {
+      "game_id": 401519451,
+      "round": 1,
+      "region": null,
+      "home_team_id": 44,
+      "away_team_id": 2426,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401519452,
+      "round": 1,
+      "region": null,
+      "home_team_id": 322,
+      "away_team_id": 2352,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401519454,
+      "round": 2,
+      "region": null,
+      "home_team_id": 107,
+      "away_team_id": 44,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401519455,
+      "round": 2,
+      "region": null,
+      "home_team_id": 2329,
+      "away_team_id": 2083,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401519456,
+      "round": 2,
+      "region": null,
+      "home_team_id": 2142,
+      "away_team_id": 349,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401519458,
+      "round": 2,
+      "region": null,
+      "home_team_id": 104,
+      "away_team_id": 2352,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401519459,
+      "round": 3,
+      "region": null,
+      "home_team_id": 107,
+      "away_team_id": 2329,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401519460,
+      "round": 3,
+      "region": null,
+      "home_team_id": 104,
+      "away_team_id": 349,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401519461,
+      "round": 4,
+      "region": null,
+      "home_team_id": 104,
+      "away_team_id": 107,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    }
+  ]
+}

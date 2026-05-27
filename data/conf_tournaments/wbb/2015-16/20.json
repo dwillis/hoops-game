@@ -1,0 +1,119 @@
+{
+  "season": "2015-16",
+  "tournament_id": 20,
+  "conference_name": "MOUNTAIN WEST WOMEN'S CHAMPIONSHIP",
+  "num_teams": 11,
+  "regions": [],
+  "games": [
+    {
+      "game_id": 400870114,
+      "round": 1,
+      "region": null,
+      "home_team_id": 21,
+      "away_team_id": 2751,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 400870115,
+      "round": 1,
+      "region": null,
+      "home_team_id": 328,
+      "away_team_id": 2440,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 400870116,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2439,
+      "away_team_id": 2005,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 400870117,
+      "round": 2,
+      "region": null,
+      "home_team_id": 23,
+      "away_team_id": 167,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 400870529,
+      "round": 2,
+      "region": null,
+      "home_team_id": 36,
+      "away_team_id": 21,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 400870542,
+      "round": 2,
+      "region": null,
+      "home_team_id": 278,
+      "away_team_id": 328,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 400870570,
+      "round": 2,
+      "region": null,
+      "home_team_id": 68,
+      "away_team_id": 2439,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 400870666,
+      "round": 3,
+      "region": null,
+      "home_team_id": 36,
+      "away_team_id": 167,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 400870704,
+      "round": 3,
+      "region": null,
+      "home_team_id": 278,
+      "away_team_id": 2439,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 400870756,
+      "round": 4,
+      "region": null,
+      "home_team_id": 36,
+      "away_team_id": 278,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    }
+  ]
+}

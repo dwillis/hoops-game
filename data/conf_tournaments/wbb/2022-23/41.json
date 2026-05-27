@@ -1,0 +1,42 @@
+{
+  "season": "2022-23",
+  "tournament_id": 41,
+  "conference_name": "Ivy League Tournament pres. by TIAA",
+  "num_teams": 4,
+  "regions": [],
+  "games": [
+    {
+      "game_id": 401513573,
+      "round": 1,
+      "region": null,
+      "home_team_id": 163,
+      "away_team_id": 219,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513574,
+      "round": 1,
+      "region": null,
+      "home_team_id": 171,
+      "away_team_id": 108,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513575,
+      "round": 2,
+      "region": null,
+      "home_team_id": 163,
+      "away_team_id": 108,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    }
+  ]
+}

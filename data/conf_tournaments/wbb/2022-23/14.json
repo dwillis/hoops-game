@@ -1,0 +1,119 @@
+{
+  "season": "2022-23",
+  "tournament_id": 14,
+  "conference_name": "Barbasol Horizon League Championship",
+  "num_teams": 11,
+  "regions": [],
+  "games": [
+    {
+      "game_id": 401513563,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2473,
+      "away_team_id": 2750,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513564,
+      "round": 1,
+      "region": null,
+      "home_team_id": 270,
+      "away_team_id": 2523,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513565,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2870,
+      "away_team_id": 2174,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513566,
+      "round": 2,
+      "region": null,
+      "home_team_id": 2754,
+      "away_team_id": 94,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513567,
+      "round": 2,
+      "region": null,
+      "home_team_id": 85,
+      "away_team_id": 2870,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513568,
+      "round": 2,
+      "region": null,
+      "home_team_id": 325,
+      "away_team_id": 270,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513569,
+      "round": 2,
+      "region": null,
+      "home_team_id": 2739,
+      "away_team_id": 2750,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513570,
+      "round": 3,
+      "region": null,
+      "home_team_id": 2739,
+      "away_team_id": 2870,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513571,
+      "round": 3,
+      "region": null,
+      "home_team_id": 325,
+      "away_team_id": 94,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513572,
+      "round": 4,
+      "region": null,
+      "home_team_id": 2739,
+      "away_team_id": 325,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    }
+  ]
+}

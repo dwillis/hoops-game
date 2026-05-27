@@ -1,0 +1,11 @@
+{
+  "season": "2020-21",
+  "conferences": [
+    {
+      "tournament_id": 28,
+      "conference_name": "SEC Women's Tournament",
+      "num_teams": 13,
+      "num_games": 12
+    }
+  ]
+}

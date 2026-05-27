@@ -1,0 +1,86 @@
+{
+  "season": "2022-23",
+  "tournament_id": 1,
+  "conference_name": "America East Playoffs",
+  "num_teams": 8,
+  "regions": [],
+  "games": [
+    {
+      "game_id": 401523979,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2378,
+      "away_team_id": 2885,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401523980,
+      "round": 1,
+      "region": null,
+      "home_team_id": 311,
+      "away_team_id": 2066,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401523981,
+      "round": 1,
+      "region": null,
+      "home_team_id": 399,
+      "away_team_id": 2349,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401523982,
+      "round": 1,
+      "region": null,
+      "home_team_id": 261,
+      "away_team_id": 2803,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401523983,
+      "round": 2,
+      "region": null,
+      "home_team_id": 399,
+      "away_team_id": 311,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401523984,
+      "round": 2,
+      "region": null,
+      "home_team_id": 261,
+      "away_team_id": 2378,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401523985,
+      "round": 3,
+      "region": null,
+      "home_team_id": 261,
+      "away_team_id": 399,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "season": "2021-22",
+  "tournament_id": 4,
+  "conference_name": "ASUN Championship",
+  "num_teams": 4,
+  "regions": [],
+  "games": [
+    {
+      "game_id": 401402490,
+      "round": 1,
+      "region": null,
+      "home_team_id": 526,
+      "away_team_id": 56,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401402491,
+      "round": 1,
+      "region": null,
+      "home_team_id": 55,
+      "away_team_id": 2335,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401402492,
+      "round": 2,
+      "region": null,
+      "home_team_id": 526,
+      "away_team_id": 55,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    }
+  ]
+}

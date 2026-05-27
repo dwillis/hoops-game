@@ -1,0 +1,86 @@
+{
+  "season": "2022-23",
+  "tournament_id": 29,
+  "conference_name": "Ingles SoCon Championship",
+  "num_teams": 8,
+  "regions": [],
+  "games": [
+    {
+      "game_id": 401513695,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2747,
+      "away_team_id": 2717,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513696,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2430,
+      "away_team_id": 2382,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513697,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2193,
+      "away_team_id": 2535,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513698,
+      "round": 1,
+      "region": null,
+      "home_team_id": 236,
+      "away_team_id": 231,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513699,
+      "round": 2,
+      "region": null,
+      "home_team_id": 2747,
+      "away_team_id": 2430,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513700,
+      "round": 2,
+      "region": null,
+      "home_team_id": 236,
+      "away_team_id": 2193,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513701,
+      "round": 3,
+      "region": null,
+      "home_team_id": 2747,
+      "away_team_id": 236,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    }
+  ]
+}

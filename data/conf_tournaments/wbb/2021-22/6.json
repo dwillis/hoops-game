@@ -1,0 +1,20 @@
+{
+  "season": "2021-22",
+  "tournament_id": 6,
+  "conference_name": "Big East Tournament",
+  "num_teams": 2,
+  "regions": [],
+  "games": [
+    {
+      "game_id": 401402535,
+      "round": 1,
+      "region": null,
+      "home_team_id": 41,
+      "away_team_id": 222,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    }
+  ]
+}

@@ -1,0 +1,130 @@
+{
+  "season": "2022-23",
+  "tournament_id": 26,
+  "conference_name": "Pac-12 Tournament pres. by New York Life",
+  "num_teams": 12,
+  "regions": [],
+  "games": [
+    {
+      "game_id": 401513671,
+      "round": 1,
+      "region": null,
+      "home_team_id": 264,
+      "away_team_id": 2483,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513672,
+      "round": 1,
+      "region": null,
+      "home_team_id": 26,
+      "away_team_id": 9,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513673,
+      "round": 1,
+      "region": null,
+      "home_team_id": 30,
+      "away_team_id": 204,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513674,
+      "round": 1,
+      "region": null,
+      "home_team_id": 265,
+      "away_team_id": 25,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513675,
+      "round": 2,
+      "region": null,
+      "home_team_id": 24,
+      "away_team_id": 2483,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513676,
+      "round": 2,
+      "region": null,
+      "home_team_id": 12,
+      "away_team_id": 26,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513677,
+      "round": 2,
+      "region": null,
+      "home_team_id": 38,
+      "away_team_id": 204,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513678,
+      "round": 2,
+      "region": null,
+      "home_team_id": 254,
+      "away_team_id": 265,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513679,
+      "round": 3,
+      "region": null,
+      "home_team_id": 24,
+      "away_team_id": 26,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513680,
+      "round": 3,
+      "region": null,
+      "home_team_id": 38,
+      "away_team_id": 265,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513681,
+      "round": 4,
+      "region": null,
+      "home_team_id": 26,
+      "away_team_id": 265,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    }
+  ]
+}

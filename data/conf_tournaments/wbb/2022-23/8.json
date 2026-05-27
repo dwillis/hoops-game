@@ -1,0 +1,108 @@
+{
+  "season": "2022-23",
+  "tournament_id": 8,
+  "conference_name": "Hercules Tires Big South Championship",
+  "num_teams": 10,
+  "regions": [],
+  "games": [
+    {
+      "game_id": 401513493,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2427,
+      "away_team_id": 2737,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513494,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2908,
+      "away_team_id": 2127,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513495,
+      "round": 2,
+      "region": null,
+      "home_team_id": 2241,
+      "away_team_id": 2427,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513496,
+      "round": 2,
+      "region": null,
+      "home_team_id": 2515,
+      "away_team_id": 2506,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513497,
+      "round": 2,
+      "region": null,
+      "home_team_id": 2097,
+      "away_team_id": 2344,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513498,
+      "round": 2,
+      "region": null,
+      "home_team_id": 2272,
+      "away_team_id": 2908,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513499,
+      "round": 3,
+      "region": null,
+      "home_team_id": 2241,
+      "away_team_id": 2515,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513500,
+      "round": 3,
+      "region": null,
+      "home_team_id": 2272,
+      "away_team_id": 2097,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401513501,
+      "round": 4,
+      "region": null,
+      "home_team_id": 2241,
+      "away_team_id": 2272,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    }
+  ]
+}

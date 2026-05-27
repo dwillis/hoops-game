@@ -1,0 +1,75 @@
+{
+  "season": "2024-25",
+  "tournament_id": 14,
+  "conference_name": "Barbasol Horizon League Championship",
+  "num_teams": 8,
+  "regions": [],
+  "games": [
+    {
+      "game_id": 401743979,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2523,
+      "away_team_id": 94,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401743980,
+      "round": 1,
+      "region": null,
+      "home_team_id": 325,
+      "away_team_id": 2174,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401743981,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2870,
+      "away_team_id": 2750,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401743982,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2739,
+      "away_team_id": 2473,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401743983,
+      "round": 2,
+      "region": null,
+      "home_team_id": 2739,
+      "away_team_id": 2523,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401743984,
+      "round": 2,
+      "region": null,
+      "home_team_id": 2870,
+      "away_team_id": 325,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    }
+  ]
+}

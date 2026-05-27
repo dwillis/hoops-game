@@ -1,0 +1,29 @@
+{
+  "season": "2019-20",
+  "conferences": [
+    {
+      "tournament_id": 3,
+      "conference_name": "ACC TOURNAMENT",
+      "num_teams": 15,
+      "num_games": 14
+    },
+    {
+      "tournament_id": 9,
+      "conference_name": "BIG TEN TOURNAMENT",
+      "num_teams": 14,
+      "num_games": 13
+    },
+    {
+      "tournament_id": 26,
+      "conference_name": "PAC-12 TOURNAMENT",
+      "num_teams": 12,
+      "num_games": 11
+    },
+    {
+      "tournament_id": 28,
+      "conference_name": "SEC WOMEN'S TOURNAMENT",
+      "num_teams": 14,
+      "num_games": 13
+    }
+  ]
+}

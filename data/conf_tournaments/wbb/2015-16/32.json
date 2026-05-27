@@ -1,0 +1,86 @@
+{
+  "season": "2015-16",
+  "tournament_id": 32,
+  "conference_name": "SUMMIT LEAGUE WOMEN'S CHAMPIONSHIP",
+  "num_teams": 8,
+  "regions": [],
+  "games": [
+    {
+      "game_id": 400868285,
+      "round": 1,
+      "region": null,
+      "home_team_id": 233,
+      "away_team_id": 2172,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 400868287,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2571,
+      "away_team_id": 2870,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 400868286,
+      "round": 1,
+      "region": null,
+      "home_team_id": 198,
+      "away_team_id": 2710,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 400868288,
+      "round": 1,
+      "region": null,
+      "home_team_id": 85,
+      "away_team_id": 2437,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 400870266,
+      "round": 2,
+      "region": null,
+      "home_team_id": 233,
+      "away_team_id": 198,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 400870291,
+      "round": 2,
+      "region": null,
+      "home_team_id": 2571,
+      "away_team_id": 2437,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 400870489,
+      "round": 3,
+      "region": null,
+      "home_team_id": 233,
+      "away_team_id": 2571,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    }
+  ]
+}

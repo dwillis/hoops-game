@@ -1,0 +1,75 @@
+{
+  "season": "2024-25",
+  "tournament_id": 27,
+  "conference_name": "Patriot League Championship",
+  "num_teams": 10,
+  "regions": [],
+  "games": [
+    {
+      "game_id": 401744070,
+      "round": 1,
+      "region": null,
+      "home_team_id": 104,
+      "away_team_id": 2352,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401744072,
+      "round": 1,
+      "region": null,
+      "home_team_id": 322,
+      "away_team_id": 44,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401744074,
+      "round": 2,
+      "region": null,
+      "home_team_id": 2142,
+      "away_team_id": 2083,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401744075,
+      "round": 2,
+      "region": null,
+      "home_team_id": 349,
+      "away_team_id": 322,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401744076,
+      "round": 2,
+      "region": null,
+      "home_team_id": 2329,
+      "away_team_id": 104,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401744077,
+      "round": 2,
+      "region": null,
+      "home_team_id": 2426,
+      "away_team_id": 107,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    }
+  ]
+}

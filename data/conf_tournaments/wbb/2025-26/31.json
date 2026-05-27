@@ -1,0 +1,130 @@
+{
+  "season": "2025-26",
+  "tournament_id": 31,
+  "conference_name": "SWAC Tournament",
+  "num_teams": 12,
+  "regions": [],
+  "games": [
+    {
+      "game_id": 401851763,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2640,
+      "away_team_id": 2065,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401851764,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2400,
+      "away_team_id": 2504,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401851765,
+      "round": 2,
+      "region": null,
+      "home_team_id": 50,
+      "away_team_id": 2065,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401851766,
+      "round": 2,
+      "region": null,
+      "home_team_id": 2029,
+      "away_team_id": 2400,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401851767,
+      "round": 3,
+      "region": null,
+      "home_team_id": 2010,
+      "away_team_id": 50,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401851770,
+      "round": 3,
+      "region": null,
+      "home_team_id": 2016,
+      "away_team_id": 2029,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401851768,
+      "round": 3,
+      "region": null,
+      "home_team_id": 2582,
+      "away_team_id": 2296,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401851769,
+      "round": 3,
+      "region": null,
+      "home_team_id": 2011,
+      "away_team_id": 2755,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401851771,
+      "round": 4,
+      "region": null,
+      "home_team_id": 2010,
+      "away_team_id": 2582,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401851772,
+      "round": 4,
+      "region": null,
+      "home_team_id": 2011,
+      "away_team_id": 2029,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401851773,
+      "round": 5,
+      "region": null,
+      "home_team_id": 2011,
+      "away_team_id": 2582,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    }
+  ]
+}

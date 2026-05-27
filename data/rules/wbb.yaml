@@ -1,0 +1,60 @@
+# Per-season WBB rules, keyed by season string (e.g. "2023-24").
+# Source: NCAA WBB rule books; see HOOPS_2026_WBB.md §3.5.
+#
+# v1 ships only seasons from 2015-16 forward (the quarters era). The pre-2015-16
+# halves rules are documented at the bottom for v3 reference but are not
+# selectable through `rules_for()` in v1.
+
+defaults: &quarters_30
+  league: wbb
+  structure: quarters
+  quarter_minutes: 10
+  shot_clock_seconds: 30
+  bonus: per_quarter_5th_foul_two_shots
+  timeouts_per_team: 4
+  ot_minutes: 5
+  personal_foul_limit: 5
+
+seasons:
+  "2015-16":
+    <<: *quarters_30
+    three_point_distance_ft: 20.75   # 20'9"
+  "2016-17":
+    <<: *quarters_30
+    three_point_distance_ft: 20.75
+  "2017-18":
+    <<: *quarters_30
+    three_point_distance_ft: 20.75
+  "2018-19":
+    <<: *quarters_30
+    three_point_distance_ft: 20.75
+  "2019-20":
+    <<: *quarters_30
+    three_point_distance_ft: 20.75
+  "2020-21":
+    <<: *quarters_30
+    three_point_distance_ft: 20.75
+  "2021-22":
+    <<: *quarters_30
+    three_point_distance_ft: 22.146  # 22'1.75" — moved to men's distance
+  "2022-23":
+    <<: *quarters_30
+    three_point_distance_ft: 22.146
+  "2023-24":
+    <<: *quarters_30
+    three_point_distance_ft: 22.146
+  "2024-25":
+    <<: *quarters_30
+    three_point_distance_ft: 22.146
+  "2025-26":
+    <<: *quarters_30
+    three_point_distance_ft: 22.146
+
+# Pre-2015-16 (halves era) — not loaded by v1. Kept for v3 reference.
+# 2014-15:
+#   structure: halves
+#   half_minutes: 20
+#   shot_clock_seconds: 30
+#   three_point_distance_ft: 20.75
+#   bonus: cumulative_7th_foul_one_and_one_then_10th_double_bonus
+#   timeouts_per_team: 4

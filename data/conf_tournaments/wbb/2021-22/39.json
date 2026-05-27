@@ -1,0 +1,119 @@
+{
+  "season": "2021-22",
+  "tournament_id": 39,
+  "conference_name": "Air Force Reserve American Athletic Conference Championship",
+  "num_teams": 11,
+  "regions": [],
+  "games": [
+    {
+      "game_id": 401402455,
+      "round": 1,
+      "region": null,
+      "home_team_id": 202,
+      "away_team_id": 2724,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401402456,
+      "round": 1,
+      "region": null,
+      "home_team_id": 235,
+      "away_team_id": 151,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401402457,
+      "round": 1,
+      "region": null,
+      "home_team_id": 248,
+      "away_team_id": 2132,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401402458,
+      "round": 2,
+      "region": null,
+      "home_team_id": 2116,
+      "away_team_id": 202,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401402459,
+      "round": 2,
+      "region": null,
+      "home_team_id": 218,
+      "away_team_id": 2567,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401402460,
+      "round": 2,
+      "region": null,
+      "home_team_id": 58,
+      "away_team_id": 235,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401402461,
+      "round": 2,
+      "region": null,
+      "home_team_id": 2655,
+      "away_team_id": 248,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401402462,
+      "round": 3,
+      "region": null,
+      "home_team_id": 2116,
+      "away_team_id": 2567,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401402463,
+      "round": 3,
+      "region": null,
+      "home_team_id": 58,
+      "away_team_id": 248,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401402464,
+      "round": 4,
+      "region": null,
+      "home_team_id": 2116,
+      "away_team_id": 58,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    }
+  ]
+}

@@ -1,0 +1,86 @@
+{
+  "season": "2024-25",
+  "tournament_id": 20,
+  "conference_name": "Mountain West Championship",
+  "num_teams": 11,
+  "regions": [],
+  "games": [
+    {
+      "game_id": 401744035,
+      "round": 1,
+      "region": null,
+      "home_team_id": 68,
+      "away_team_id": 2440,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401744036,
+      "round": 1,
+      "region": null,
+      "home_team_id": 2005,
+      "away_team_id": 328,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401744037,
+      "round": 1,
+      "region": null,
+      "home_team_id": 278,
+      "away_team_id": 23,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401744038,
+      "round": 2,
+      "region": null,
+      "home_team_id": 2439,
+      "away_team_id": 68,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401744039,
+      "round": 2,
+      "region": null,
+      "home_team_id": 21,
+      "away_team_id": 167,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401744040,
+      "round": 2,
+      "region": null,
+      "home_team_id": 2751,
+      "away_team_id": 2005,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    },
+    {
+      "game_id": 401744042,
+      "round": 2,
+      "region": null,
+      "home_team_id": 36,
+      "away_team_id": 278,
+      "home_seed": null,
+      "away_seed": null,
+      "home_score": null,
+      "away_score": null
+    }
+  ]
+}
