@@ -4,6 +4,8 @@ A terminal coaching simulator for women's college basketball, covering D-I teams
 
 Built with real play-by-play data from ESPN via the sportsdataverse ecosystem.
 
+![Hoops gameplay screenshot](game.png)
+
 ## Requirements
 
 - Python 3.11+
