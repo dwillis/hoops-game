@@ -11,10 +11,9 @@ build/
 htmlcov/
 
 data/.cache/
-data/teams/wbb/*.parquet
-data/players/wbb/*.parquet
-data/pbp_distributions/wbb/**/*.parquet
-data/games/wbb/*.parquet
+data/raw/wbb/*/pbp.parquet
+data/raw/wbb/*/schedule.parquet
+data/raw/wbb/*/team_box.parquet
 
 HOOPS_2026_WBB.md
 docs/

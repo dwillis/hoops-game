@@ -7,9 +7,10 @@ from typing import Literal
 import yaml
 from pydantic import BaseModel, ConfigDict
 
+from hoops.data.paths import DATA_ROOT
 from hoops.league import League
 
-RULES_DIR = Path(__file__).resolve().parents[2] / "data" / "rules"
+RULES_DIR = DATA_ROOT / "rules"
 
 
 class UnsupportedSeasonError(KeyError):
