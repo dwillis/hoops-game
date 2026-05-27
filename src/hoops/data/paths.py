@@ -2,11 +2,19 @@
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
 from hoops.league import League
 
-DATA_ROOT = Path(__file__).resolve().parents[3] / "data"
+
+def _find_data_root() -> Path:
+    if getattr(sys, "_MEIPASS", None):
+        return Path(sys._MEIPASS) / "data"
+    return Path(__file__).resolve().parents[3] / "data"
+
+
+DATA_ROOT = _find_data_root()
 
 
 def raw_dir(league: League, season: str) -> Path:
