@@ -8,10 +8,29 @@ Built with real play-by-play data from ESPN via the sportsdataverse ecosystem.
 
 ## Download
 
-Pre-built executables for macOS, Windows, and Linux are available on the [Releases page](https://github.com/dwillis/hoops-game/releases). No Python installation required — download, make it executable if needed, and run:
+Pre-built executables for macOS, Windows, and Linux are available on the [Releases page](https://github.com/dwillis/hoops-game/releases). No Python installation required.
+
+Hoops is a terminal program, so you start it from a terminal rather than by
+double-clicking. macOS and Windows will also warn that the file is from an
+unidentified developer the first time you run it — this is normal for free,
+unsigned projects.
+
+**👉 New to the command line? See [RUNNING.md](RUNNING.md) for friendly,
+step-by-step instructions for each platform, including how to clear the macOS
+security warning.**
+
+The short version, once the download is made executable:
 
 ```bash
-./hoops play
+# macOS
+chmod +x hoops-macos && xattr -d com.apple.quarantine hoops-macos
+./hoops-macos play
+
+# Linux
+chmod +x hoops-linux && ./hoops-linux play
+
+# Windows (PowerShell)
+.\hoops-windows.exe play
 ```
 
 ## Install from Source
