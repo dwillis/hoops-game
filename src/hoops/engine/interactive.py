@@ -20,22 +20,27 @@ import numpy as np
 
 from hoops.data.distributions import LeaguePrior, TeamPriors
 from hoops.data.rosters import Roster
+from hoops.engine.attribution import _ASSIST_PROB, _BLOCK_PROB, _STEAL_PROB, _credit_event
 from hoops.engine.clock import end_period
+from hoops.engine.cpu_coach import (
+    CpuCoach,
+    CpuPersonality,
+    PossessionSummary,
+    TrendTracker,
+    assign_personality,
+)
 from hoops.engine.events import Event
 from hoops.engine.fatigue import (
-    FatigueTracker, check_substitutions, player_importance,
+    FatigueTracker,
+    check_substitutions,
 )
-from hoops.engine.lineup_rates import LineupRates, compute_lineup_rates
-from hoops.engine.machine import simulate_possession, _player_name, _star_player_ids
+from hoops.engine.lineup_rates import compute_lineup_rates
+from hoops.engine.machine import _player_name, _star_player_ids, simulate_possession
 from hoops.engine.matchup import adjust_offense, apply_hca
 from hoops.engine.policy import CoachPolicies, CoachPolicy, DefensiveScheme, OffensiveScheme
+from hoops.engine.scheme_affinity import detect_archetype
 from hoops.engine.state import GameState, Side
 from hoops.rules import Rules
-from hoops.engine.cpu_coach import (
-    CpuCoach, CpuPersonality, PossessionSummary, TrendTracker, assign_personality,
-)
-from hoops.engine.scheme_affinity import detect_archetype
-from hoops.engine.attribution import _ASSIST_PROB, _BLOCK_PROB, _STEAL_PROB, _credit_event
 from hoops.ui.lineup import LineupState
 
 
@@ -135,7 +140,9 @@ def _deserialize_policy(d: dict) -> CoachPolicy:
         two_for_one=d.get("two_for_one", True),
         hold_for_last=d.get("hold_for_last", True),
         foul_when_down_3=d.get("foul_when_down_3", False),
-        intentional_foul_in_bonus_when_trailing=d.get("intentional_foul_in_bonus_when_trailing", False),
+        intentional_foul_in_bonus_when_trailing=d.get(
+            "intentional_foul_in_bonus_when_trailing", False
+        ),
         timeouts_remaining=d.get("timeouts_remaining", 4),
     )
 
@@ -456,21 +463,57 @@ class InteractiveGame:
         if self.state.is_final:
             return PossessionResult(events=[], is_dead_ball=False, is_game_over=True)
 
-        result_events: list[Event] = []
-
         # Handle period end if clock is at zero.
         if self.state.seconds_left <= 0:
-            self.state, evs = end_period(self.state)
-            result_events.extend(evs)
-            self.all_events.extend(evs)
-            if self.state.is_final:
-                return PossessionResult(
-                    events=result_events, is_dead_ball=False, is_game_over=True,
-                )
-            return PossessionResult(
-                events=result_events, is_dead_ball=False, is_game_over=False,
-            )
+            return self._handle_period_end()
 
+        evs = self._simulate_and_attribute()
+        result_events: list[Event] = []
+        result_events.extend(evs)
+        self.all_events.extend(evs)
+
+        self._record_cpu_trend(evs)
+        self._tick_fatigue()
+
+        is_dead = any(
+            e.type in ("shot_made", "foul_personal", "foul_shooting",
+                       "free_throw_made", "free_throw_missed")
+            for e in evs
+        )
+        subs_allowed = self._subs_allowed(evs, is_dead)
+
+        # Auto-subs at dead balls
+        if is_dead and subs_allowed:
+            if self.cpu_coach is not None:
+                result_events.extend(self._process_cpu_coaching())
+            else:
+                result_events.extend(self._process_h2h_subs())
+
+            # Media timeout check at dead balls (both modes).
+            media_events = self._check_media_timeout()
+            result_events.extend(media_events)
+
+        return PossessionResult(
+            events=result_events,
+            is_dead_ball=is_dead,
+            is_game_over=False,
+            subs_allowed=subs_allowed,
+        )
+
+    def _handle_period_end(self) -> PossessionResult:
+        """Advance past a period boundary (quarter end, halftime, overtime)."""
+        self.state, evs = end_period(self.state)
+        self.all_events.extend(evs)
+        if self.state.is_final:
+            return PossessionResult(
+                events=evs, is_dead_ball=False, is_game_over=True,
+            )
+        return PossessionResult(
+            events=evs, is_dead_ball=False, is_game_over=False,
+        )
+
+    def _simulate_and_attribute(self) -> list[Event]:
+        """Simulate one possession and attribute events to on-court players."""
         # Determine lineup rates for this possession.
         if self.state.possession is Side.HOME:
             off_lr, def_lr = self._home_lr, self._away_lr
@@ -485,12 +528,10 @@ class InteractiveGame:
 
         # Full attribution: assign players to all events and generate
         # credit events (assists, steals, blocks) using on-court rosters.
-        evs = _attribute_possession(evs, self.lineup, self.rng, self.fatigue)
+        return _attribute_possession(evs, self.lineup, self.rng, self.fatigue)
 
-        result_events.extend(evs)
-        self.all_events.extend(evs)
-
-        # Feed CPU trend tracker.
+    def _record_cpu_trend(self, evs: list[Event]) -> None:
+        """Feed the CPU coach's trend tracker with this possession's summary."""
         # After simulate_possession, self.state.possession has flipped to the
         # NEXT offense, so the side that just had the ball is .other.
         poss_side = self.state.possession.other
@@ -517,7 +558,8 @@ class InteractiveGame:
                 player=scorer,
             ))
 
-        # Fatigue tick
+    def _tick_fatigue(self) -> None:
+        """Accumulate fatigue for on-court players and rest the bench."""
         poss_duration = 17.0
         home_on = [p.player_id for p in self.lineup.on_court(Side.HOME)]
         away_on = [p.player_id for p in self.lineup.on_court(Side.AWAY)]
@@ -527,14 +569,9 @@ class InteractiveGame:
         self.fatigue.rest(home_bench + away_bench, poss_duration)
         self.fatigue.tick_cooldowns()
 
-        is_dead = any(
-            e.type in ("shot_made", "foul_personal", "foul_shooting",
-                       "free_throw_made", "free_throw_missed")
-            for e in evs
-        )
-
-        # NCAA rule: no subs after a made FG in the last 59.9s of Q4/OT
-        # unless a foul, violation, or timeout also occurred.
+    def _subs_allowed(self, evs: list[Event], is_dead: bool) -> bool:
+        """NCAA rule: no subs after a made FG in the last 59.9s of Q4/OT
+        unless a foul, violation, or timeout also occurred."""
         subs_allowed = True
         if is_dead and self.state.quarter >= 4 and self.state.seconds_left <= 59.9:
             had_foul = any(e.type in ("foul_personal", "foul_shooting") for e in evs)
@@ -546,154 +583,148 @@ class InteractiveGame:
             )
             if only_made_fg:
                 subs_allowed = False
+        return subs_allowed
 
-        # Auto-subs at dead balls
-        if is_dead and subs_allowed:
-            if self.cpu_coach is not None:
-                # CPU timeout decision (before regular auto-subs since TO triggers its own).
-                if self._cpu_should_call_timeout():
-                    cpu_to_events = self._cpu_call_timeout()
-                    result_events.extend(cpu_to_events)
-                else:
-                    # Update run tracker: reset if CPU scored (run broken).
-                    cpu_score = self.state.score_for(self.cpu_side)
-                    if cpu_score > self._cpu_own_score_at_last_check:
-                        self._reset_run_tracker()
-
-                # Late-game policy updates (before subs).
-                cpu_policy = self.policies.for_side(self.cpu_side)
-                self.cpu_coach.update_late_game_policy(
-                    cpu_policy,
-                    quarter=self.state.quarter,
-                    seconds_left=self.state.seconds_left,
-                    cpu_score=self.state.score_for(self.cpu_side),
-                    opp_score=self.state.score_for(self.human_side),
-                )
-
-                # Foul trouble subs (before matchup and fatigue subs).
-                cpu_on_court_ft = self.lineup.on_court(self.cpu_side)
-                cpu_bench_ft = self.lineup.bench(self.cpu_side)
-                fouls_map = {p.player_id: self.fatigue.fouls(p.player_id) for p in cpu_on_court_ft}
-                foul_trouble_subs = self.cpu_coach.should_foul_trouble_sub(
-                    cpu_on_court_ft, cpu_bench_ft, fouls_map,
-                    quarter=self.state.quarter,
-                    seconds_left=self.state.seconds_left,
-                )
-                star_ids_ft = self._home_stars if self.cpu_side is Side.HOME else self._away_stars
-                for off_id, on_id in foul_trouble_subs:
-                    off_name = _player_name(off_id, self.cpu_side, self.home_roster, self.away_roster)
-                    on_name = _player_name(on_id, self.cpu_side, self.home_roster, self.away_roster)
-                    self.lineup.substitute(self.cpu_side, off_id, on_id)
-                    self.fatigue.start_cooldown(off_id, off_id in star_ids_ft)
-                    self.fatigue.start_cooldown(on_id, on_id in star_ids_ft)
-                    ev = Event(
-                        quarter=self.state.quarter,
-                        seconds_left=self.state.seconds_left,
-                        type="substitution",
-                        team=self.cpu_side,
-                        detail=f"{on_name} in for {off_name}",
-                        home_score=self.state.home_score,
-                        away_score=self.state.away_score,
-                        player=on_name,
-                    )
-                    result_events.append(ev)
-                    self.all_events.append(ev)
-
-                # CPU scheme-switch evaluation.
-                total_poss = self.state.home_possessions + self.state.away_possessions
-                opp_on_court = self.lineup.on_court(self.human_side)
-                opp_archetypes = [detect_archetype(p) for p in opp_on_court]
-                new_scheme = self.cpu_coach.should_switch_scheme(
-                    quarter=self.state.quarter,
-                    seconds_left=self.state.seconds_left,
-                    cpu_score=self.state.score_for(self.cpu_side),
-                    opp_score=self.state.score_for(self.human_side),
-                    opp_lineup_archetypes=opp_archetypes,
-                    total_possessions=total_poss,
-                )
-                if new_scheme is not None:
-                    self._set_cpu_scheme(new_scheme)
-                    self.cpu_coach.apply_scheme_switch(new_scheme, total_poss)
-
-                # CPU offensive scheme evaluation.
-                opp_def_scheme = self.policies.for_side(self.cpu_side.other).scheme
-                new_off_scheme = self.cpu_coach.should_switch_off_scheme(
-                    quarter=self.state.quarter,
-                    seconds_left=self.state.seconds_left,
-                    cpu_score=self.state.score_for(self.cpu_side),
-                    opp_score=self.state.score_for(self.cpu_side.other),
-                    opp_def_scheme=opp_def_scheme,
-                    total_possessions=total_poss,
-                )
-                if new_off_scheme is not None:
-                    self.set_off_scheme(self.cpu_side, new_off_scheme)
-                    self.cpu_coach.apply_off_scheme_switch(new_off_scheme, total_poss)
-
-                # CPU matchup-based subs.
-                cpu_on_court = self.lineup.on_court(self.cpu_side)
-                cpu_bench = self.lineup.bench(self.cpu_side)
-                matchup_subs = self.cpu_coach.should_matchup_sub(cpu_on_court, cpu_bench)
-                star_ids = self._home_stars if self.cpu_side is Side.HOME else self._away_stars
-                for off_id, on_id in matchup_subs:
-                    off_name = _player_name(off_id, self.cpu_side, self.home_roster, self.away_roster)
-                    on_name = _player_name(on_id, self.cpu_side, self.home_roster, self.away_roster)
-                    self.lineup.substitute(self.cpu_side, off_id, on_id)
-                    self.fatigue.start_cooldown(off_id, off_id in star_ids)
-                    self.fatigue.start_cooldown(on_id, on_id in star_ids)
-                    ev = Event(
-                        quarter=self.state.quarter,
-                        seconds_left=self.state.seconds_left,
-                        type="substitution",
-                        team=self.cpu_side,
-                        detail=f"{on_name} in for {off_name}",
-                        home_score=self.state.home_score,
-                        away_score=self.state.away_score,
-                        player=on_name,
-                    )
-                    result_events.append(ev)
-                    self.all_events.append(ev)
-
-                cpu_sub_events = self._cpu_auto_subs()
-                result_events.extend(cpu_sub_events)
-                self.all_events.extend(cpu_sub_events)
-            else:
-                # H2H mode: fatigue auto-subs for BOTH sides (no CPU coaching).
-                for side in (Side.HOME, Side.AWAY):
-                    sub_events_data = check_substitutions(
-                        self.lineup, self.fatigue, self.state.quarter, side,
-                    )
-                    if sub_events_data:
-                        star_ids = self._home_stars if side is Side.HOME else self._away_stars
-                        for se in sub_events_data:
-                            off_name = _player_name(se.off_player_id, se.side, self.home_roster, self.away_roster)
-                            on_name = _player_name(se.on_player_id, se.side, self.home_roster, self.away_roster)
-                            self.lineup.substitute(se.side, se.off_player_id, se.on_player_id)
-                            self.fatigue.start_cooldown(se.off_player_id, se.off_player_id in star_ids)
-                            self.fatigue.start_cooldown(se.on_player_id, se.on_player_id in star_ids)
-                            ev = Event(
-                                quarter=self.state.quarter,
-                                seconds_left=self.state.seconds_left,
-                                type="substitution",
-                                team=se.side,
-                                detail=f"{on_name} in for {off_name}",
-                                home_score=self.state.home_score,
-                                away_score=self.state.away_score,
-                                player=on_name,
-                            )
-                            result_events.append(ev)
-                            self.all_events.append(ev)
-                        self._recompute_lineup_rates()
-
-            # Media timeout check at dead balls (both modes).
-            media_events = self._check_media_timeout()
-            result_events.extend(media_events)
-
-        return PossessionResult(
-            events=result_events,
-            is_dead_ball=is_dead,
-            is_game_over=False,
-            subs_allowed=subs_allowed,
+    def _apply_cpu_sub(self, off_id: int, on_id: int, star_ids: set[int]) -> Event:
+        """Apply a single CPU substitution, returning (and recording) the event."""
+        off_name = _player_name(
+            off_id, self.cpu_side, self.home_roster, self.away_roster
         )
+        on_name = _player_name(on_id, self.cpu_side, self.home_roster, self.away_roster)
+        self.lineup.substitute(self.cpu_side, off_id, on_id)
+        self.fatigue.start_cooldown(off_id, off_id in star_ids)
+        self.fatigue.start_cooldown(on_id, on_id in star_ids)
+        ev = Event(
+            quarter=self.state.quarter,
+            seconds_left=self.state.seconds_left,
+            type="substitution",
+            team=self.cpu_side,
+            detail=f"{on_name} in for {off_name}",
+            home_score=self.state.home_score,
+            away_score=self.state.away_score,
+            player=on_name,
+        )
+        self.all_events.append(ev)
+        return ev
+
+    def _process_cpu_coaching(self) -> list[Event]:
+        """Run all CPU coaching decisions at a dead ball: timeout, late-game
+        policy, foul-trouble subs, scheme switches, matchup subs, fatigue subs."""
+        result_events: list[Event] = []
+
+        # CPU timeout decision (before regular auto-subs since TO triggers its own).
+        if self._cpu_should_call_timeout():
+            cpu_to_events = self._cpu_call_timeout()
+            result_events.extend(cpu_to_events)
+        else:
+            # Update run tracker: reset if CPU scored (run broken).
+            cpu_score = self.state.score_for(self.cpu_side)
+            if cpu_score > self._cpu_own_score_at_last_check:
+                self._reset_run_tracker()
+
+        # Late-game policy updates (before subs).
+        cpu_policy = self.policies.for_side(self.cpu_side)
+        self.cpu_coach.update_late_game_policy(
+            cpu_policy,
+            quarter=self.state.quarter,
+            seconds_left=self.state.seconds_left,
+            cpu_score=self.state.score_for(self.cpu_side),
+            opp_score=self.state.score_for(self.human_side),
+        )
+
+        # Foul trouble subs (before matchup and fatigue subs).
+        cpu_on_court_ft = self.lineup.on_court(self.cpu_side)
+        cpu_bench_ft = self.lineup.bench(self.cpu_side)
+        fouls_map = {p.player_id: self.fatigue.fouls(p.player_id) for p in cpu_on_court_ft}
+        foul_trouble_subs = self.cpu_coach.should_foul_trouble_sub(
+            cpu_on_court_ft, cpu_bench_ft, fouls_map,
+            quarter=self.state.quarter,
+            seconds_left=self.state.seconds_left,
+        )
+        star_ids_ft = self._home_stars if self.cpu_side is Side.HOME else self._away_stars
+        for off_id, on_id in foul_trouble_subs:
+            result_events.append(self._apply_cpu_sub(off_id, on_id, star_ids_ft))
+
+        # CPU scheme-switch evaluation.
+        total_poss = self.state.home_possessions + self.state.away_possessions
+        opp_on_court = self.lineup.on_court(self.human_side)
+        opp_archetypes = [detect_archetype(p) for p in opp_on_court]
+        new_scheme = self.cpu_coach.should_switch_scheme(
+            quarter=self.state.quarter,
+            seconds_left=self.state.seconds_left,
+            cpu_score=self.state.score_for(self.cpu_side),
+            opp_score=self.state.score_for(self.human_side),
+            opp_lineup_archetypes=opp_archetypes,
+            total_possessions=total_poss,
+        )
+        if new_scheme is not None:
+            self._set_cpu_scheme(new_scheme)
+            self.cpu_coach.apply_scheme_switch(new_scheme, total_poss)
+
+        # CPU offensive scheme evaluation.
+        opp_def_scheme = self.policies.for_side(self.cpu_side.other).scheme
+        new_off_scheme = self.cpu_coach.should_switch_off_scheme(
+            quarter=self.state.quarter,
+            seconds_left=self.state.seconds_left,
+            cpu_score=self.state.score_for(self.cpu_side),
+            opp_score=self.state.score_for(self.cpu_side.other),
+            opp_def_scheme=opp_def_scheme,
+            total_possessions=total_poss,
+        )
+        if new_off_scheme is not None:
+            self.set_off_scheme(self.cpu_side, new_off_scheme)
+            self.cpu_coach.apply_off_scheme_switch(new_off_scheme, total_poss)
+
+        # CPU matchup-based subs.
+        cpu_on_court = self.lineup.on_court(self.cpu_side)
+        cpu_bench = self.lineup.bench(self.cpu_side)
+        matchup_subs = self.cpu_coach.should_matchup_sub(cpu_on_court, cpu_bench)
+        star_ids = self._home_stars if self.cpu_side is Side.HOME else self._away_stars
+        for off_id, on_id in matchup_subs:
+            result_events.append(self._apply_cpu_sub(off_id, on_id, star_ids))
+
+        cpu_sub_events = self._cpu_auto_subs()
+        result_events.extend(cpu_sub_events)
+        self.all_events.extend(cpu_sub_events)
+        return result_events
+
+    def _process_h2h_subs(self) -> list[Event]:
+        """H2H mode: fatigue auto-subs for BOTH sides (no CPU coaching)."""
+        result_events: list[Event] = []
+        for side in (Side.HOME, Side.AWAY):
+            sub_events_data = check_substitutions(
+                self.lineup, self.fatigue, self.state.quarter, side,
+            )
+            if sub_events_data:
+                star_ids = self._home_stars if side is Side.HOME else self._away_stars
+                for se in sub_events_data:
+                    off_name = _player_name(
+                        se.off_player_id, se.side, self.home_roster, self.away_roster
+                    )
+                    on_name = _player_name(
+                        se.on_player_id, se.side, self.home_roster, self.away_roster
+                    )
+                    self.lineup.substitute(se.side, se.off_player_id, se.on_player_id)
+                    self.fatigue.start_cooldown(
+                        se.off_player_id, se.off_player_id in star_ids
+                    )
+                    self.fatigue.start_cooldown(
+                        se.on_player_id, se.on_player_id in star_ids
+                    )
+                    ev = Event(
+                        quarter=self.state.quarter,
+                        seconds_left=self.state.seconds_left,
+                        type="substitution",
+                        team=se.side,
+                        detail=f"{on_name} in for {off_name}",
+                        home_score=self.state.home_score,
+                        away_score=self.state.away_score,
+                        player=on_name,
+                    )
+                    result_events.append(ev)
+                    self.all_events.append(ev)
+                self._recompute_lineup_rates()
+        return result_events
 
     def _cpu_auto_subs(self) -> list[Event]:
         """Run check_substitutions for the CPU side and apply them."""
@@ -703,7 +734,6 @@ class InteractiveGame:
         if not sub_events_data:
             return []
 
-        roster = self.home_roster if self.cpu_side is Side.HOME else self.away_roster
         star_ids = self._home_stars if self.cpu_side is Side.HOME else self._away_stars
         events: list[Event] = []
 
@@ -719,7 +749,9 @@ class InteractiveGame:
                     (self.state.quarter <= 2 and fouls_val >= 3)
                     or (self.state.quarter > 2 and fouls_val >= 4)
                 )
-                if not is_foul_sub and self.cpu_coach.should_veto_fatigue_sub(off_name, fatigue_val):
+                if not is_foul_sub and self.cpu_coach.should_veto_fatigue_sub(
+                    off_name, fatigue_val
+                ):
                     continue
 
             on_name = _player_name(se.on_player_id, se.side, self.home_roster, self.away_roster)
@@ -809,7 +841,7 @@ class InteractiveGame:
         d: dict,
         *,
         _preloaded: tuple | None = None,
-    ) -> "InteractiveGame":
+    ) -> InteractiveGame:
         """Reconstruct an InteractiveGame from a save dict.
 
         If ``_preloaded`` is given as ``(home_priors, away_priors, rules,
