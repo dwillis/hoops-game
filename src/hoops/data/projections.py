@@ -11,20 +11,31 @@ from __future__ import annotations
 import polars as pl
 
 from hoops.data.paths import games_path, raw_dir, teams_path
-from hoops.data.sos import adjust as sos_adjust, compute_schedule
+from hoops.data.sos import adjust as sos_adjust
+from hoops.data.sos import compute_schedule
 from hoops.league import League
 
-
 # --- team-season aggregation --------------------------------------------------
+
+# Dean Oliver's empirical weight for free-throw attempts in the possession
+# estimator: roughly 44% of FTA end a possession (the rest are the front end
+# of a pair, and-ones, or technicals).
+FTA_POSSESSION_WEIGHT = 0.44
+
 
 def _possessions_expr() -> pl.Expr:
     """Dean Oliver's possession estimator from box-score totals."""
     return (
         pl.col("field_goals_attempted")
-        + 0.44 * pl.col("free_throws_attempted")
+        + FTA_POSSESSION_WEIGHT * pl.col("free_throws_attempted")
         - pl.col("offensive_rebounds")
         + pl.col("total_turnovers")
     )
+
+
+def _safe_div(num: pl.Expr, den: pl.Expr) -> pl.Expr:
+    """Divide, returning null instead of inf/NaN when the denominator is 0."""
+    return pl.when(den > 0).then(num / den).otherwise(None)
 
 
 def project_team_seasons(season: str, league: League = League.WBB) -> pl.DataFrame:
@@ -96,7 +107,7 @@ def project_team_seasons(season: str, league: League = League.WBB) -> pl.DataFra
         pl.col("opp_tov").sum().alias("def_tov"),
         # average of own + opponent possessions per game = pace estimator
         ((_possessions_expr()
-          + pl.col("opp_fga") + 0.44 * pl.col("opp_fta")
+          + pl.col("opp_fga") + FTA_POSSESSION_WEIGHT * pl.col("opp_fta")
           - pl.col("opp_orb") + pl.col("opp_tov")) / 2).mean().alias("pace_per_game"),
     )
 
@@ -104,19 +115,23 @@ def project_team_seasons(season: str, league: League = League.WBB) -> pl.DataFra
         league=pl.lit(league.value),
         season=pl.lit(season),
         # offensive four factors
-        off_efg=(pl.col("fgm") + 0.5 * pl.col("fg3m")) / pl.col("fga"),
-        off_tov_pct=pl.col("tov") / (pl.col("fga") + 0.44 * pl.col("fta") + pl.col("tov")),
-        off_orb_pct=pl.col("orb") / (pl.col("orb") + pl.col("def_drb")),
-        off_fta_rate=pl.col("fta") / pl.col("fga"),
-        off_3pt_rate=pl.col("fg3a") / pl.col("fga"),
-        off_ft_pct=pl.when(pl.col("fta") > 0)
-        .then(pl.col("ftm") / pl.col("fta"))
-        .otherwise(None),
+        off_efg=_safe_div(pl.col("fgm") + 0.5 * pl.col("fg3m"), pl.col("fga")),
+        off_tov_pct=_safe_div(
+            pl.col("tov"),
+            pl.col("fga") + FTA_POSSESSION_WEIGHT * pl.col("fta") + pl.col("tov"),
+        ),
+        off_orb_pct=_safe_div(pl.col("orb"), pl.col("orb") + pl.col("def_drb")),
+        off_fta_rate=_safe_div(pl.col("fta"), pl.col("fga")),
+        off_3pt_rate=_safe_div(pl.col("fg3a"), pl.col("fga")),
+        off_ft_pct=_safe_div(pl.col("ftm"), pl.col("fta")),
         # defensive four factors
-        def_efg=(pl.col("def_fgm") + 0.5 * pl.col("def_fg3m")) / pl.col("def_fga"),
-        def_tov_pct=pl.col("def_tov") / (pl.col("def_fga") + 0.44 * pl.col("def_fta") + pl.col("def_tov")),
-        def_orb_pct=pl.col("def_orb") / (pl.col("def_orb") + pl.col("drb")),
-        def_fta_rate=pl.col("def_fta") / pl.col("def_fga"),
+        def_efg=_safe_div(pl.col("def_fgm") + 0.5 * pl.col("def_fg3m"), pl.col("def_fga")),
+        def_tov_pct=_safe_div(
+            pl.col("def_tov"),
+            pl.col("def_fga") + FTA_POSSESSION_WEIGHT * pl.col("def_fta") + pl.col("def_tov"),
+        ),
+        def_orb_pct=_safe_div(pl.col("def_orb"), pl.col("def_orb") + pl.col("drb")),
+        def_fta_rate=_safe_div(pl.col("def_fta"), pl.col("def_fga")),
         # pace = poss per 40, treating each game as 40 regulation minutes
         # (OT inflation washes out at season scale; flagged for revisit)
         pace=pl.col("pace_per_game"),

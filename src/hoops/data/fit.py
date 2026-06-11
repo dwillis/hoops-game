@@ -93,7 +93,12 @@ def fit_team_priors(season: str, league: League = League.WBB) -> pl.DataFrame:
 
     # Foul rate: PF / opponent possessions, per 100. Opponent possessions
     # equal the team's defensive opportunities. We approximate with own poss.
-    foul_rate = (pl.col("personal_fouls") / pl.col("poss") * 100).alias("foul_rate_per_100")
+    foul_rate = (
+        pl.when(pl.col("poss") > 0)
+        .then(pl.col("personal_fouls") / pl.col("poss") * 100)
+        .otherwise(None)
+        .alias("foul_rate_per_100")
+    )
 
     return (
         teams.join(shots, on="team_id", how="inner")

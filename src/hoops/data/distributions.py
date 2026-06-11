@@ -10,7 +10,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import polars as pl
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from hoops.data.paths import distributions_dir, teams_path
 from hoops.league import League
@@ -23,6 +23,13 @@ class ShotMix(BaseModel):
     rim: float = Field(ge=0.0, le=1.0)
     mid: float = Field(ge=0.0, le=1.0)
     three: float = Field(ge=0.0, le=1.0)
+
+    @model_validator(mode="after")
+    def _shares_sum_to_one(self) -> ShotMix:
+        total = self.rim + self.mid + self.three
+        if abs(total - 1.0) > 0.01:
+            raise ValueError(f"shot-mix shares must sum to 1.0, got {total:.4f}")
+        return self
 
 
 class ZoneEFG(BaseModel):
@@ -99,13 +106,22 @@ def _league_prior_path(league: League, season: str) -> Path:
     return distributions_dir(league, season) / "league_prior.parquet"
 
 
+def _read_parquet_or_raise(path: Path, what: str) -> pl.DataFrame:
+    if not path.exists():
+        raise FileNotFoundError(
+            f"{what} not found at {path}. Run scripts/fit_distributions.py "
+            "(see README) to generate the fitted distributions."
+        )
+    return pl.read_parquet(path)
+
+
 def load_team_priors(league: League, season: str) -> list[TeamPriors]:
-    df = pl.read_parquet(_team_priors_path(league, season))
+    df = _read_parquet_or_raise(_team_priors_path(league, season), "team priors")
     return [_row_to_team_priors(r) for r in df.iter_rows(named=True)]
 
 
 def load_team_prior(league: League, season: str, team_id: int) -> TeamPriors:
-    df = pl.read_parquet(_team_priors_path(league, season)).filter(
+    df = _read_parquet_or_raise(_team_priors_path(league, season), "team priors").filter(
         pl.col("team_id") == team_id
     )
     if df.is_empty():
@@ -114,7 +130,7 @@ def load_team_prior(league: League, season: str, team_id: int) -> TeamPriors:
 
 
 def load_league_prior(league: League, season: str) -> LeaguePrior:
-    df = pl.read_parquet(_league_prior_path(league, season))
+    df = _read_parquet_or_raise(_league_prior_path(league, season), "league prior")
     return _row_to_league_prior(next(df.iter_rows(named=True)))
 
 
@@ -128,7 +144,7 @@ DIVISION_ONE_MIN_GAMES = 20
 
 def division_one_team_ids(league: League, season: str) -> set[int]:
     """Return the set of team_ids whose games-played puts them in D-I."""
-    df = pl.read_parquet(teams_path(league, season))
+    df = _read_parquet_or_raise(teams_path(league, season), "team-season table")
     return set(
         df.filter(pl.col("games") >= DIVISION_ONE_MIN_GAMES)["team_id"].to_list()
     )

@@ -12,6 +12,7 @@ from pathlib import Path
 import polars as pl
 
 from hoops.data.paths import players_path, raw_dir, teams_path
+from hoops.data.projections import FTA_POSSESSION_WEIGHT
 from hoops.league import League
 
 _MIN_MINUTES = 10
@@ -23,7 +24,7 @@ def project_player_season(
     pb = pl.read_parquet(raw_dir(league, season) / "player_box.parquet")
 
     pb = pb.filter(
-        (pl.col("did_not_play") != True)
+        (pl.col("did_not_play").not_())
         & pl.col("minutes").is_not_null()
         & (pl.col("minutes") > 0)
     )
@@ -80,12 +81,13 @@ def project_player_season(
 
     shot_volume = (
         pl.col("fga").cast(pl.Float64)
-        + 0.44 * pl.col("fta").cast(pl.Float64)
+        + FTA_POSSESSION_WEIGHT * pl.col("fta").cast(pl.Float64)
         + pl.col("tov").cast(pl.Float64)
     )
 
     ts_denom = 2.0 * (
-        pl.col("fga").cast(pl.Float64) + 0.44 * pl.col("fta").cast(pl.Float64)
+        pl.col("fga").cast(pl.Float64)
+        + FTA_POSSESSION_WEIGHT * pl.col("fta").cast(pl.Float64)
     )
 
     agg = agg.with_columns(
