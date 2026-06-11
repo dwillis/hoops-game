@@ -65,12 +65,25 @@ class Player:
     min_share: float | None = None
     ast_pct: float | None = None
 
+    def mpg(self, team_games: int = 0) -> float:
+        """Minutes per game, diluted by team games for part-time players."""
+        gp = max(self.games_played, 1)
+        if team_games > 0 and self.games_played < team_games / 2:
+            gp = team_games
+        return self.minutes / gp
+
 
 @dataclass
 class Roster:
     team_id: int
     team_name: str
     players: tuple[Player, ...]
+
+    @property
+    def team_games(self) -> int:
+        if not self.players:
+            return 0
+        return max(p.games_played for p in self.players)
 
     def _weighted_sample(
         self, weights: np.ndarray, rng: np.random.Generator

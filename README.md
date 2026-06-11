@@ -78,7 +78,7 @@ uv run hoops conference --season 2024-25 --conf "Big Ten" --team "USC"
 | `D` | Cycle defensive scheme (man / zone / press) |
 | `O` | Cycle offensive scheme (balanced / hurry / three-point) |
 | `U` | Toggle substitution screen |
-| `X` | Toggle box score detail |
+| `X` | Cycle box score: team / players / season roster |
 | `S` | Save game |
 | `L` | Load game |
 

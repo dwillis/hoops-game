@@ -222,8 +222,10 @@ class BoxScorePanel(Static):
         self._playback: PlaybackState | None = None
         self._fatigue = None  # FatigueTracker, set by CoachGameScreen
         self._lineup = None   # LineupState, set by CoachGameScreen
+        self._home_roster = None  # Roster, for season averages view
+        self._away_roster = None
         self.last_text = ""
-        self.show_players = False
+        self._view_mode = 0  # 0=team, 1=players, 2=roster averages
 
     def bind_playback(self, p: PlaybackState) -> None:
         self._playback = p
@@ -233,8 +235,13 @@ class BoxScorePanel(Static):
         self._fatigue = fatigue
         self._lineup = lineup
 
+    def bind_rosters(self, home_roster, away_roster) -> None:
+        self._home_roster = home_roster
+        self._away_roster = away_roster
+
     def toggle_detail(self) -> None:
-        self.show_players = not self.show_players
+        max_modes = 3 if self._home_roster else 2
+        self._view_mode = (self._view_mode + 1) % max_modes
         self.refresh_view()
 
     def _set(self, text: str) -> None:
@@ -245,8 +252,10 @@ class BoxScorePanel(Static):
         if self._playback is None:
             self._set("(no game loaded)")
             return
-        if self.show_players:
+        if self._view_mode == 1:
             self._render_player_view()
+        elif self._view_mode == 2:
+            self._render_roster_view()
         else:
             self._render_team_view()
 
@@ -271,7 +280,7 @@ class BoxScorePanel(Static):
             row(self.home_name, p.home_box),
             row(self.away_name, p.away_box),
             "",
-            "[x] Toggle player box scores",
+            "Team summary  [x] → Player box scores",
         ]))
 
     @staticmethod
@@ -336,7 +345,47 @@ class BoxScorePanel(Static):
                 lines.append(self._player_row(pb) + tag + bench)
             lines.append("")
 
-        lines.append("[x] Toggle team summary")
+        if self._home_roster:
+            hint = "Player box scores  [x] → Season roster"
+        else:
+            hint = "Player box scores  [x] → Team summary"
+        lines.append(hint)
+        self._set("\n".join(lines))
+
+    def _render_roster_view(self) -> None:
+        lines: list[str] = []
+        header = (
+            f"{'Player':<22} {'POS':<4} {'GP':>3}  "
+            f"{'MPG':>4}  {'PPG':>5} {'RPG':>5} {'APG':>5}  "
+            f"{'FG%':>4}  {'3P%':>4}  {'FT%':>4}"
+        )
+
+        for label, roster in [
+            (self.home_name, self._home_roster),
+            (self.away_name, self._away_roster),
+        ]:
+            lines.append(f"── {label} (season averages) ──")
+            lines.append(header)
+            team_gp = roster.team_games
+            for p in roster.players:
+                gp = max(p.games_played, 1)
+                ppg = p.points / gp
+                rpg = (p.orb + p.drb) / gp
+                apg = p.ast / gp
+                mpg = p.mpg(team_gp)
+                fg_pct = (p.fgm / p.fga * 100) if p.fga > 0 else 0.0
+                fg3_pct = (p.fg3m / p.fg3a * 100) if p.fg3a > 0 else 0.0
+                ft_pct = (p.ftm / p.fta * 100) if p.fta > 0 else 0.0
+                pos = p.position or "—"
+                name = p.name[:21]
+                lines.append(
+                    f"{name:<22} {pos:<4} {gp:3d}  "
+                    f"{mpg:4.1f}  {ppg:5.1f} {rpg:5.1f} {apg:5.1f}  "
+                    f"{fg_pct:4.1f}  {fg3_pct:4.1f}  {ft_pct:4.1f}"
+                )
+            lines.append("")
+
+        lines.append("Season roster  [x] → Team summary")
         self._set("\n".join(lines))
 
 
@@ -418,6 +467,8 @@ class GameScreen(Screen):
         self.app.title = f"Hoops 2026 — {self.home_name} @ {self.away_name}"
         self.scoreboard.bind_playback(self.playback)
         self.box.bind_playback(self.playback)
+        if self.home_roster and self.away_roster:
+            self.box.bind_rosters(self.home_roster, self.away_roster)
         self.event_log.configure_team_labels(self.home_name, self.away_name)
         e = self.playback.step_one()
         if e is not None:
@@ -811,13 +862,16 @@ class SubScreen(Screen):
                 self._pull_idx == idx and side is self._active_side
             ) else "  "
             tag = "  (in →)" if p.player_id not in actual_ids else ""
-            rows.append(f"{marker}{idx + 1}. {p.name}  ({int(p.minutes)} min){tag}")
+            team_gp = self.lineup.roster(side).team_games
+            mpg = p.mpg(team_gp)
+            rows.append(f"{marker}{idx + 1}. {p.name}  ({mpg:.1f} mpg){tag}")
         rows += ["", "Bench:", ""]
         bench = self.lineup.pending_bench(side)[:8]
         for idx, p in enumerate(bench):
             letter = "abcdefgh"[idx]
             tag = "  (→ out)" if p.player_id in actual_ids else ""
-            rows.append(f"  {letter}. {p.name}  ({int(p.minutes)} min){tag}")
+            mpg = p.mpg(team_gp)
+            rows.append(f"  {letter}. {p.name}  ({mpg:.1f} mpg){tag}")
         return "\n".join(rows)
 
     def _status_text(self) -> str:
@@ -1000,11 +1054,12 @@ class StartingLineupScreen(Screen):
             else:
                 key_label = " "
             marker = " ★ " if i in self._selected else "   "
+            team_gp = self._roster.team_games
             gp = max(p.games_played, 1)
             ppg = p.points / gp
             rpg = (p.orb + p.drb) / gp
             apg = p.ast / gp
-            mpg = p.minutes / gp
+            mpg = p.mpg(team_gp)
             fg_pct = (p.fgm / p.fga * 100) if p.fga > 0 else 0.0
             fg3_pct = (p.fg3m / p.fg3a * 100) if p.fg3a > 0 else 0.0
             ft_pct = (p.ftm / p.fta * 100) if p.fta > 0 else 0.0
@@ -1124,6 +1179,7 @@ class CoachGameScreen(Screen):
         self.scoreboard.bind_playback(self.playback)
         self.box.bind_playback(self.playback)
         self.box.bind_fatigue(self.game.fatigue, self.game.lineup)
+        self.box.bind_rosters(self.game.home_roster, self.game.away_roster)
         self.event_log.configure_team_labels(self.home_name, self.away_name)
         # Play the tip-off event.
         e = self.playback.step_one()
@@ -1406,6 +1462,8 @@ class CoachGameScreen(Screen):
             self.playback.step_one()
         self.scoreboard.bind_playback(self.playback)
         self.box.bind_playback(self.playback)
+        self.box.bind_fatigue(self.game.fatigue, self.game.lineup)
+        self.box.bind_rosters(self.game.home_roster, self.game.away_roster)
         self.event_log.clear()
         for e in self.playback.events:
             self.event_log.append_event(e)
@@ -1544,19 +1602,22 @@ class CoachSubScreen(Screen):
         side = self._sub_side
         on_court = self.game.lineup.on_court(side)
         bench = self.game.lineup.bench(side)
+        team_gp = self.game.lineup.roster(side).team_games
         rows = ["On court:", ""]
         for idx, p in enumerate(on_court):
             marker = " *" if self._pull_idx == idx else "  "
             fatigue = self.game.fatigue.fatigue(p.player_id)
             fatigue_bar = "!" if fatigue > 0.7 else ""
             fouls = self.game.fatigue.fouls(p.player_id)
-            rows.append(f"{marker}{idx + 1}. {p.name}  ({int(p.minutes)} min)  F:{fouls}  {fatigue_bar}")
+            mpg = p.mpg(team_gp)
+            rows.append(f"{marker}{idx + 1}. {p.name}  ({mpg:.1f} mpg)  F:{fouls}  {fatigue_bar}")
         rows += ["", "Bench:", ""]
         for idx, p in enumerate(bench[:8]):
             letter = "abcdefgh"[idx]
             fatigue = self.game.fatigue.fatigue(p.player_id)
             rested = "rested" if fatigue < 0.3 else ""
-            rows.append(f"  {letter}. {p.name}  ({int(p.minutes)} min)  {rested}")
+            mpg = p.mpg(team_gp)
+            rows.append(f"  {letter}. {p.name}  ({mpg:.1f} mpg)  {rested}")
         return "\n".join(rows)
 
     def _status_text(self) -> str:
