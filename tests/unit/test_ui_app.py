@@ -225,7 +225,8 @@ async def test_post_game_screen_appears_after_run_to_end():
 
 @pytest.mark.asyncio
 async def test_post_game_screen_esc_returns_to_game():
-    from hoops.ui.app import GameScreen as _GS, PostGameScreen
+    from hoops.ui.app import GameScreen as _GS
+    from hoops.ui.app import PostGameScreen
 
     app = HoopsApp(events=_scripted_events(), home_name="Home", away_name="Away")
     async with app.run_test() as pilot:

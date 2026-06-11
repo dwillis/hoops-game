@@ -21,7 +21,6 @@ from hoops.engine.fatigue import FatigueTracker, apply_fatigue
 from hoops.engine.policy import DefensiveScheme
 from hoops.engine.scheme_affinity import scheme_affinity
 
-
 # Shrinkage constant: at K minutes, player's own rate gets 50% weight.
 _SHRINKAGE_K = 200.0
 
@@ -141,7 +140,7 @@ def compute_lineup_rates(
 
     def _weighted_avg(attr: str) -> float:
         total_val = 0.0
-        for i, (player, w) in enumerate(zip(on_court, weights)):
+        for i, (player, w) in enumerate(zip(on_court, weights, strict=True)):
             val = getattr(player, attr)
             if val is None:
                 val = fallbacks[attr]
@@ -151,7 +150,7 @@ def compute_lineup_rates(
         return total_val
 
     # 3. Build shooter tuples.
-    shooters = tuple((p, w) for p, w in zip(on_court, weights))
+    shooters = tuple((p, w) for p, w in zip(on_court, weights, strict=True))
 
     # Pace adjustment: compare lineup tempo proxy to team average.
     _TEAM_AVG_TEMPO = 0.20  # mean usage for a balanced team
@@ -164,7 +163,7 @@ def compute_lineup_rates(
 
     # eFG adjustment: compare lineup avg shrunk ts_pct to team TS%.
     lineup_ts_vals = []
-    for p, w in zip(on_court, weights):
+    for p, w in zip(on_court, weights, strict=True):
         ts = p.ts_pct if p.ts_pct is not None else _team_ts
         lineup_ts_vals.append(w * ts)
     lineup_avg_ts = sum(lineup_ts_vals)

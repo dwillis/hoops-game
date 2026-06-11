@@ -5,8 +5,13 @@ from __future__ import annotations
 import pytest
 
 from hoops.data.distributions import ShotMix, TeamPriors, ZoneEFG
+from hoops.data.rosters import Player, Roster
+from hoops.engine.interactive import InteractiveGame
 from hoops.engine.matchup import apply_hca
+from hoops.engine.sampling import make_rng
+from hoops.engine.state import Side
 from hoops.league import League
+from hoops.rules import Rules
 
 
 def _team_priors(**overrides) -> TeamPriors:
@@ -78,12 +83,6 @@ def test_apply_hca_does_not_modify_original():
 # ---------------------------------------------------------------------------
 # Integration: HCA applied in InteractiveGame
 # ---------------------------------------------------------------------------
-
-from hoops.data.rosters import Player, Roster
-from hoops.engine.interactive import InteractiveGame
-from hoops.engine.sampling import make_rng
-from hoops.engine.state import Side
-from hoops.rules import Rules
 
 
 def _player(pid, name, minutes=200.0, **kw):

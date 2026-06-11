@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
-from pathlib import Path
+import json
 
 import pytest
-
-import json
 
 from hoops.data.paths import (
     DATA_ROOT,
@@ -352,8 +350,18 @@ def test_list_conf_tournaments(tmp_path, monkeypatch):
     index = {
         "season": "2023-24",
         "conferences": [
-            {"tournament_id": 28, "conference_name": "SEC Tournament", "num_teams": 14, "num_games": 13},
-            {"tournament_id": 9, "conference_name": "Big Ten Tournament", "num_teams": 14, "num_games": 13},
+            {
+                "tournament_id": 28,
+                "conference_name": "SEC Tournament",
+                "num_teams": 14,
+                "num_games": 13,
+            },
+            {
+                "tournament_id": 9,
+                "conference_name": "Big Ten Tournament",
+                "num_teams": 14,
+                "num_games": 13,
+            },
         ],
     }
     (d / "index.json").write_text(json.dumps(index))
@@ -463,7 +471,7 @@ class TestConferenceBracket:
 
 def test_conf_tournament_load_from_real_data():
     """Integration: load a real conference tournament and verify structure."""
-    from hoops.data.paths import list_conf_tournaments, conf_tournament_path
+    from hoops.data.paths import conf_tournament_path, list_conf_tournaments
     from hoops.league import League
 
     seasons = bracket_seasons(League.WBB)

@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import numpy as np
-import pytest
 
 from hoops.data.rosters import Player, Roster
 from hoops.engine.fatigue import (
-    FatigueTracker, player_importance, apply_fatigue,
-    check_substitutions, SubEvent,
+    FatigueTracker,
+    apply_fatigue,
+    check_substitutions,
+    player_importance,
 )
 from hoops.engine.state import Side
 from hoops.ui.lineup import LineupState

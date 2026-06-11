@@ -8,7 +8,6 @@ the play handler that run *before* HoopsApp is instantiated.
 from __future__ import annotations
 
 import pytest
-
 from typer.testing import CliRunner
 
 from hoops.cli import _resolve_team, app

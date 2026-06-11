@@ -160,7 +160,7 @@ def test_step_to_end_drains_log():
 def test_real_engine_events_play_back_consistently(seed):
     """End-to-end: playing the engine's event log with PlaybackState should
     converge to the same final score the engine reports."""
-    from hoops.data.distributions import LeaguePrior, ShotMix, TeamPriors, ZoneEFG
+    from hoops.data.distributions import ShotMix, TeamPriors, ZoneEFG
     from hoops.engine.machine import simulate_game
     from hoops.engine.sampling import make_rng
     from hoops.league import League

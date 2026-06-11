@@ -1,9 +1,9 @@
 """Tests for tournament bracket UI screens."""
 
 from __future__ import annotations
-import pytest
+
 from hoops.engine.bracket import Bracket
-from hoops.ui.bracket_screens import render_bracket_round, render_bracket_region
+from hoops.ui.bracket_screens import render_bracket_region, render_bracket_round
 
 
 def _8team_bracket_json() -> dict:

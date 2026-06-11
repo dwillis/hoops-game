@@ -1,6 +1,7 @@
 """Textual App for NCAA tournament bracket mode.
 
-Orchestrates: load bracket -> for each round (auto-sim -> bracket view -> user game) -> champion/elimination.
+Orchestrates: load bracket -> for each round (auto-sim -> bracket view -> user game)
+-> champion/elimination.
 """
 
 from __future__ import annotations
@@ -77,7 +78,9 @@ class TournamentApp(App):
 
         self._bracket = Bracket.load(bp)
         if self._user_team_id not in self._bracket.team_ids():
-            self.exit(message=f"Team {self._user_team_id} not in {self._season} tournament bracket.")
+            self.exit(
+                message=f"Team {self._user_team_id} not in {self._season} tournament bracket."
+            )
             return
 
         # Load priors, league prior, rules

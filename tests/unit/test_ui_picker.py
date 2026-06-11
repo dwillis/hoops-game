@@ -6,7 +6,13 @@ import pytest
 
 from hoops.data.paths import distributions_dir
 from hoops.league import League
-from hoops.ui.app import CoachGameScreen, GameScreen, HoopsApp, StartingLineupScreen, TeamSelectScreen
+from hoops.ui.app import (
+    CoachGameScreen,
+    GameScreen,
+    HoopsApp,
+    StartingLineupScreen,
+    TeamSelectScreen,
+)
 
 
 def _data_present() -> bool:

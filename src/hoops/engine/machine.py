@@ -30,18 +30,22 @@ import numpy as np
 from hoops.data.distributions import LeaguePrior, TeamPriors
 from hoops.data.rosters import Roster
 from hoops.engine.clock import end_period
-from hoops.engine.fatigue import FatigueTracker, check_substitutions
 from hoops.engine.events import Event
+from hoops.engine.fatigue import FatigueTracker, check_substitutions
 from hoops.engine.fouls import is_in_bonus
 from hoops.engine.lineup_rates import (
-    LineupRates, compute_lineup_rates,
-    sample_shooter, player_shot_zone, player_zone_make_prob,
+    LineupRates,
+    compute_lineup_rates,
+    player_shot_zone,
+    player_zone_make_prob,
+    sample_shooter,
 )
 from hoops.engine.matchup import adjust_offense, apply_hca, apply_off_scheme, apply_scheme
 from hoops.engine.policy import CoachPolicies, CoachPolicy
 from hoops.engine.state import GameState, Side
 from hoops.rules import Rules
 from hoops.ui.lineup import LineupState
+
 
 def _star_player_ids(roster: Roster) -> set[int]:
     from hoops.engine.fatigue import player_importance
@@ -221,7 +225,11 @@ def simulate_possession(
     _shooter = None
 
     def _effective_ft_pct(shooter_player=None):
-        if off_lineup_rates is not None and shooter_player is not None and shooter_player.ft_pct is not None:
+        if (
+            off_lineup_rates is not None
+            and shooter_player is not None
+            and shooter_player.ft_pct is not None
+        ):
             return shooter_player.ft_pct
         if off_lineup_rates is not None:
             return off_lineup_rates.ft_pct
@@ -439,7 +447,12 @@ def simulate_game(
         lineup_state = LineupState.with_default_starters(home_roster, away_roster, rng)
 
     fatigue_tracker: FatigueTracker | None = None
-    if enable_fatigue and lineup_state is not None and home_roster is not None and away_roster is not None:
+    if (
+        enable_fatigue
+        and lineup_state is not None
+        and home_roster is not None
+        and away_roster is not None
+    ):
         fatigue_tracker = FatigueTracker(home_roster, away_roster)
 
     _home_scheme = policies.for_side(Side.HOME).scheme if policies else None
@@ -519,8 +532,12 @@ def simulate_game(
                         on_name = _player_name(se.on_player_id, se.side, home_roster, away_roster)
                         lineup_state.substitute(se.side, se.off_player_id, se.on_player_id)
                         lineup_changed = True
-                        fatigue_tracker.start_cooldown(se.off_player_id, se.off_player_id in star_ids)
-                        fatigue_tracker.start_cooldown(se.on_player_id, se.on_player_id in star_ids)
+                        fatigue_tracker.start_cooldown(
+                            se.off_player_id, se.off_player_id in star_ids
+                        )
+                        fatigue_tracker.start_cooldown(
+                            se.on_player_id, se.on_player_id in star_ids
+                        )
                         events.append(Event(
                             quarter=state.quarter,
                             seconds_left=state.seconds_left,

@@ -1,7 +1,7 @@
 """Tests for TournamentApp orchestration."""
 
 from __future__ import annotations
-import pytest
+
 from hoops.ui.tournament_app import TournamentApp
 
 

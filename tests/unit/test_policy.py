@@ -18,9 +18,9 @@ one policy field at a time, and assert directional behavior:
 
 from __future__ import annotations
 
-import numpy as np
-import pytest
 from dataclasses import replace
+
+import numpy as np
 
 from hoops.data.distributions import ShotMix, TeamPriors, ZoneEFG
 from hoops.engine.machine import (
@@ -86,7 +86,6 @@ def _state(seconds_left: int, quarter: int = 4) -> GameState:
 def test_two_for_one_compresses_in_window():
     """In the 35-50s window with two_for_one ON, possessions are short."""
     p = _team()
-    rng = make_rng(0)
     state = _state(seconds_left=42)
 
     on = CoachPolicy(two_for_one=True, hold_for_last=False)

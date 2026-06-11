@@ -111,7 +111,6 @@ def test_attribute_picks_only_on_court_players():
 def test_substitution_changes_who_is_attributed():
     """After subbing player 1 out for player 6, only the new starter 6
     can be attributed (until further subs)."""
-    h = _roster(1, "Home", n=8)
     a = _roster(2, "Away", n=8)
     rng = np.random.default_rng(0)
     # Build a roster where only player_id == 6 has nonzero FGA so

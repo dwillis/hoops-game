@@ -210,30 +210,45 @@ class ChampionScreen(Screen):
             seed = self.bracket.team_seed(self.user_team_id)
             seed_str = f"({seed}) " if seed else ""
             if is_conf:
-                yield Static(f"CONFERENCE CHAMPIONS!\n\n{seed_str}{self.user_team_name}", classes="champion-title")
+                yield Static(
+                    f"CONFERENCE CHAMPIONS!\n\n{seed_str}{self.user_team_name}",
+                    classes="champion-title",
+                )
                 yield Static(
                     f"Congratulations! You won the {self.bracket.season} {tourney_name}!",
                     classes="champion-body",
                 )
             else:
-                yield Static(f"NATIONAL CHAMPIONS!\n\n{seed_str}{self.user_team_name}", classes="champion-title")
+                yield Static(
+                    f"NATIONAL CHAMPIONS!\n\n{seed_str}{self.user_team_name}",
+                    classes="champion-title",
+                )
                 yield Static(
                     f"Congratulations! You coached {self.user_team_name} "
                     f"to the {self.bracket.season} NCAA Championship!",
                     classes="champion-body",
                 )
         else:
-            elim_name = self.bracket.round_name(self.eliminated_round) if self.eliminated_round else "the tournament"
-            yield Static(f"TOURNAMENT OVER\n\n{self.user_team_name} eliminated in {elim_name}", classes="champion-title")
+            elim_name = (
+                self.bracket.round_name(self.eliminated_round)
+                if self.eliminated_round
+                else "the tournament"
+            )
+            yield Static(
+                f"TOURNAMENT OVER\n\n{self.user_team_name} eliminated in {elim_name}",
+                classes="champion-title",
+            )
             champ_id = self.bracket.champion()
             if champ_id:
                 seed = self.bracket.team_seed(champ_id)
                 champ_name = ""
                 for g in self.bracket.games:
                     if g.home.team_id == champ_id:
-                        champ_name = g.home.team_name; break
+                        champ_name = g.home.team_name
+                        break
                     if g.away.team_id == champ_id:
-                        champ_name = g.away.team_name; break
+                        champ_name = g.away.team_name
+                        break
                 seed_str = f"({seed}) " if seed else ""
                 yield Static(f"Champion: {seed_str}{champ_name}", classes="champion-body")
         yield Static("Press Enter or Q to exit", classes="champion-hint")

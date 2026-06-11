@@ -30,7 +30,8 @@ def _priors_present() -> bool:
 
 pytestmark = pytest.mark.skipif(
     not _priors_present(),
-    reason="fitted priors not present; run `uv run python scripts/fit_distributions.py --season 2023-24` first",
+    reason="fitted priors not present; "
+    "run `uv run python scripts/fit_distributions.py --season 2023-24` first",
 )
 
 
@@ -127,7 +128,9 @@ def test_resampling_marginals_for_all_teams():
         m = _resample_shot_marginals(p, n=50_000, rng=rng)
         for z in ("rim", "mid", "three"):
             if abs(m[f"share_{z}"] - m[f"expected_share_{z}"]) >= 0.012:
-                failures.append((p.team_name, z, "share", m[f"share_{z}"], m[f"expected_share_{z}"]))
+                failures.append(
+                    (p.team_name, z, "share", m[f"share_{z}"], m[f"expected_share_{z}"])
+                )
     assert not failures, f"{len(failures)} marginal failures, first 5: {failures[:5]}"
 
 

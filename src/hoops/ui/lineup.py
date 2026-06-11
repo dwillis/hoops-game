@@ -28,7 +28,6 @@ from hoops.data.rosters import Player, Roster
 from hoops.engine.events import Event
 from hoops.engine.state import Side
 
-
 STARTING_LINEUP_SIZE = 5
 
 
@@ -59,7 +58,7 @@ class LineupState:
     @classmethod
     def with_default_starters(
         cls, home_roster: Roster, away_roster: Roster, rng: np.random.Generator
-    ) -> "LineupState":
+    ) -> LineupState:
         """Default starters = top-N by minutes from each roster, padded to 5
         with the next-best players if the roster is shorter."""
         starters_h = list(home_roster.players[:STARTING_LINEUP_SIZE])
@@ -213,7 +212,6 @@ class LineupState:
 
         side = e.team
         attacker = self._adhoc(side)
-        defender = self._adhoc(side.other)
 
         if e.type == "shot_made" or e.type == "shot_missed":
             if e.player is not None:

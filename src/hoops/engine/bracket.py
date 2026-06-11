@@ -120,7 +120,13 @@ class Bracket:
             game.game_idx = i
 
         max_round = max(g.round for g in games) if games else 0
-        bracket = cls(season=season, regions=regions, games=games, max_round=max_round, conference_name=conference_name)
+        bracket = cls(
+            season=season,
+            regions=regions,
+            games=games,
+            max_round=max_round,
+            conference_name=conference_name,
+        )
 
         if conference_name:
             bracket._round_names = _conf_round_names(max_round)
@@ -146,7 +152,9 @@ class Bracket:
                 self._link_pairs(current_round, next_round)
             elif rnd <= 3:
                 # NCAA regional rounds: group by region
-                regions_in_round = sorted(set(g.region for g in current_round if g.region is not None))
+                regions_in_round = sorted(
+                    set(g.region for g in current_round if g.region is not None)
+                )
                 for reg in regions_in_round:
                     cur = [g for g in current_round if g.region == reg]
                     nxt = [g for g in next_round if g.region == reg]

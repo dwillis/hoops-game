@@ -56,6 +56,10 @@ target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
+# UP042 (str-Enum -> StrEnum) is intentionally ignored: str(StrEnum.X) returns the
+# value while str() on a (str, Enum) returns 'Class.X', so converting could silently
+# change formatted output.
+ignore = ["UP042"]
 
 [dependency-groups]
 dev = [

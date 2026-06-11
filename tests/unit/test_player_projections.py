@@ -2,15 +2,13 @@
 
 from __future__ import annotations
 
-import pytest
 import polars as pl
-import numpy as np
+import pytest
 
-from hoops.data.schemas import PlayerSeason
 from hoops.data.paths import players_path, raw_dir, teams_path
 from hoops.data.player_projections import project_player_season
+from hoops.data.schemas import PlayerSeason
 from hoops.league import League
-
 
 SEASON = "2023-24"
 

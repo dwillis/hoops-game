@@ -18,7 +18,7 @@ class Side(IntEnum):
     AWAY = 1
 
     @property
-    def other(self) -> "Side":
+    def other(self) -> Side:
         return Side.AWAY if self is Side.HOME else Side.HOME
 
 
@@ -50,7 +50,7 @@ class GameState:
     opening_possession: Side
 
     @classmethod
-    def initial(cls, rules: Rules, opening_possession: Side = Side.HOME) -> "GameState":
+    def initial(cls, rules: Rules, opening_possession: Side = Side.HOME) -> GameState:
         if rules.structure != "quarters":
             raise ValueError(f"engine v0 only supports 'quarters' rules; got {rules.structure}")
         assert rules.quarter_minutes is not None
@@ -91,25 +91,25 @@ class GameState:
     def score_for(self, side: Side) -> int:
         return self.home_score if side is Side.HOME else self.away_score
 
-    def add_score(self, side: Side, points: int) -> "GameState":
+    def add_score(self, side: Side, points: int) -> GameState:
         if side is Side.HOME:
             return replace(self, home_score=self.home_score + points)
         return replace(self, away_score=self.away_score + points)
 
-    def add_team_foul(self, side: Side) -> "GameState":
+    def add_team_foul(self, side: Side) -> GameState:
         if side is Side.HOME:
             return replace(self, home_team_fouls_q=self.home_team_fouls_q + 1)
         return replace(self, away_team_fouls_q=self.away_team_fouls_q + 1)
 
-    def with_possession(self, side: Side) -> "GameState":
+    def with_possession(self, side: Side) -> GameState:
         return replace(self, possession=side)
 
-    def advance_clock(self, seconds: int) -> "GameState":
+    def advance_clock(self, seconds: int) -> GameState:
         if seconds < 0:
             raise ValueError(f"can't advance clock by negative seconds: {seconds}")
         return replace(self, seconds_left=max(0, self.seconds_left - seconds))
 
-    def end_possession(self, by: Side) -> "GameState":
+    def end_possession(self, by: Side) -> GameState:
         if by is Side.HOME:
             return replace(self, home_possessions=self.home_possessions + 1)
         return replace(self, away_possessions=self.away_possessions + 1)

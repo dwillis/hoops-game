@@ -12,7 +12,6 @@ from hoops.engine.events import Event, fmt_event
 from hoops.engine.state import Side
 from hoops.league import League
 
-
 SEASON = "2023-24"
 
 
@@ -344,7 +343,7 @@ def test_fmt_event_renders_structural_events():
 
 
 def test_fmt_event_renders_timeout():
-    from hoops.engine.events import fmt_event, Event
+    from hoops.engine.events import Event, fmt_event
     from hoops.engine.state import Side
 
     e = Event(
@@ -358,7 +357,7 @@ def test_fmt_event_renders_timeout():
 
 
 def test_fmt_event_renders_media_timeout():
-    from hoops.engine.events import fmt_event, Event
+    from hoops.engine.events import Event, fmt_event
 
     e = Event(
         quarter=1, seconds_left=295, type="media_timeout", team=None,

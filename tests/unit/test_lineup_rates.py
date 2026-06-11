@@ -7,15 +7,17 @@ import math
 import numpy as np
 
 from hoops.data.distributions import ShotMix, TeamPriors, ZoneEFG
-from hoops.data.rosters import Player
+from hoops.data.rosters import Player, Roster
+from hoops.engine.fatigue import FatigueTracker
 from hoops.engine.lineup_rates import (
-    LineupRates, compute_lineup_rates,
-    sample_shooter, player_shot_zone, player_zone_make_prob,
+    LineupRates,
+    compute_lineup_rates,
+    player_shot_zone,
+    player_zone_make_prob,
+    sample_shooter,
     shrink_rate,
 )
-from hoops.engine.fatigue import FatigueTracker
 from hoops.engine.policy import DefensiveScheme
-from hoops.data.rosters import Roster
 from hoops.league import League
 
 SEASON = "2023-24"
@@ -509,8 +511,8 @@ def test_bench_lineup_scores_fewer_points():
 def test_sample_possession_seconds_with_pace_adj():
     """Positive pace_adj should produce shorter possessions on average."""
     from hoops.engine.machine import _sample_possession_seconds
-    from hoops.engine.state import GameState, Side
     from hoops.engine.policy import CoachPolicy
+    from hoops.engine.state import GameState
     from hoops.league import League
     from hoops.rules import rules_for
 
@@ -526,7 +528,9 @@ def test_sample_possession_seconds_with_pace_adj():
     ]
 
     durations_fast = [
-        _sample_possession_seconds(tp_off, tp_def, state, policy, np.random.default_rng(i), pace_adj=3.0)
+        _sample_possession_seconds(
+            tp_off, tp_def, state, policy, np.random.default_rng(i), pace_adj=3.0
+        )
         for i in range(500)
     ]
 

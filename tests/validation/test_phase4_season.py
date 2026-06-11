@@ -45,7 +45,8 @@ def _data_present() -> bool:
 
 pytestmark = pytest.mark.skipif(
     not _data_present(),
-    reason="Phase 2 data missing; run `uv run python scripts/fit_distributions.py --season 2023-24`",
+    reason="Phase 2 data missing; "
+    "run `uv run python scripts/fit_distributions.py --season 2023-24`",
 )
 
 
@@ -80,7 +81,9 @@ def _simulated_marginals(team_id: int, opp_team_id: int, n_poss: int = 20_000) -
         if is_three:
             fg3a += 1
         shot_foul = rng.random() < p_shot_foul
-        zone_efg = {"rim": off.zone_efg.rim, "mid": off.zone_efg.mid, "three": off.zone_efg.three}[zone]
+        zone_efg = {
+            "rim": off.zone_efg.rim, "mid": off.zone_efg.mid, "three": off.zone_efg.three
+        }[zone]
         made = rng.random() < zone_efg
         if made:
             fgm += 1
@@ -170,7 +173,6 @@ def test_south_carolina_specificity_full():
     assert wins.mean() >= 32
     assert float(np.median(wins)) >= 33
     # Going 38-0 should happen but rarely.
-    actual = wins.shape[0]
     p_undefeated = (wins == actual_max_for_sc(sc_id)).mean()
     assert 0 < p_undefeated < 0.5
 

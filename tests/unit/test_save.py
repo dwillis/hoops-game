@@ -1,12 +1,7 @@
 """Tests for save/load file I/O."""
 from __future__ import annotations
 
-import json
-from pathlib import Path
-
-import pytest
-
-from hoops.engine.save import save_game, load_save, has_save, saves_dir, save_path_for
+from hoops.engine.save import has_save, load_save, save_game, save_path_for, saves_dir
 
 
 def test_saves_dir_returns_hoops_saves_path():

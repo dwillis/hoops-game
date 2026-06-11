@@ -77,11 +77,21 @@ def seasons() -> None:
 
 @app.command()
 def play(
-    season: str = typer.Option(None, "--season", help="Season for both teams (auto-detected if omitted)"),
-    home: str = typer.Option(None, "--home", help="Home team name or slug fragment (skips the picker)"),
-    away: str = typer.Option(None, "--away", help="Away team name or slug fragment (skips the picker)"),
-    home_season: str = typer.Option(None, "--home-season", help="Season for home team (overrides --season)"),
-    away_season: str = typer.Option(None, "--away-season", help="Season for away team (overrides --season)"),
+    season: str = typer.Option(
+        None, "--season", help="Season for both teams (auto-detected if omitted)"
+    ),
+    home: str = typer.Option(
+        None, "--home", help="Home team name or slug fragment (skips the picker)"
+    ),
+    away: str = typer.Option(
+        None, "--away", help="Away team name or slug fragment (skips the picker)"
+    ),
+    home_season: str = typer.Option(
+        None, "--home-season", help="Season for home team (overrides --season)"
+    ),
+    away_season: str = typer.Option(
+        None, "--away-season", help="Season for away team (overrides --season)"
+    ),
     seed: int = typer.Option(None, "--seed", help="RNG seed (random if omitted)"),
     all_teams: bool = typer.Option(
         False, "--all-teams",
@@ -177,7 +187,7 @@ def bracket(
     Uses historical bracket data extracted from schedule data. Other games
     are auto-simulated; you coach your team's games interactively.
     """
-    from hoops.data.paths import bracket_seasons, bracket_path
+    from hoops.data.paths import bracket_path, bracket_seasons
     from hoops.engine.bracket import Bracket
 
     available = bracket_seasons(League.WBB)
@@ -209,7 +219,7 @@ def bracket(
             key=lambda t: t[1],
         )
         typer.echo(f"Tournament teams for {season}:")
-        for tid, name in bracket_teams:
+        for _tid, name in bracket_teams:
             typer.echo(f"  {name}")
         typer.echo("\nPass --team <name> to choose your team.")
         raise typer.Exit(0)
@@ -236,7 +246,9 @@ def bracket(
 @app.command()
 def conference(
     season: str = typer.Option(None, "--season", help="Season to play"),
-    conf: str = typer.Option(None, "--conf", help="Conference name or fragment (e.g. 'SEC', 'Big Ten')"),
+    conf: str = typer.Option(
+        None, "--conf", help="Conference name or fragment (e.g. 'SEC', 'Big Ten')"
+    ),
     team: str = typer.Option(None, "--team", help="Team to coach (name or slug)"),
     seed: int = typer.Option(42, "--seed", help="RNG seed"),
 ) -> None:
@@ -245,7 +257,7 @@ def conference(
     Uses historical bracket data extracted from schedule data. Other games
     are auto-simulated; you coach your team's games interactively.
     """
-    from hoops.data.paths import list_conf_tournaments, conf_tournament_path
+    from hoops.data.paths import conf_tournament_path, list_conf_tournaments
 
     # Resolve season
     available = fitted_seasons(League.WBB)
@@ -257,13 +269,19 @@ def conference(
         if len(available) == 1:
             season = available[0]
         else:
-            typer.echo(f"Multiple seasons available: {', '.join(available)}\nPass --season to choose one.")
+            typer.echo(
+                f"Multiple seasons available: {', '.join(available)}\n"
+                "Pass --season to choose one."
+            )
             raise typer.Exit(1)
 
     # List available conferences
     conferences = list_conf_tournaments(League.WBB, season)
     if not conferences:
-        typer.echo(f"No conference tournament data for {season}. Run scripts/extract_conf_tournaments.py first.")
+        typer.echo(
+            f"No conference tournament data for {season}. "
+            "Run scripts/extract_conf_tournaments.py first."
+        )
         raise typer.Exit(1)
 
     if conf is None:
@@ -304,7 +322,7 @@ def conference(
             key=lambda t: t[1],
         )
         typer.echo(f"{conf_name} teams for {season}:")
-        for t_id, name in bracket_teams:
+        for _t_id, name in bracket_teams:
             typer.echo(f"  {name}")
         typer.echo("\nPass --team <name> to choose your team.")
         raise typer.Exit(0)

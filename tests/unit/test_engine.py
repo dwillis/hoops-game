@@ -10,16 +10,17 @@ Plan §3 verification items:
 from __future__ import annotations
 
 import pytest
-from hypothesis import given, settings, strategies as st
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 from hoops.data.distributions import ShotMix, TeamPriors, ZoneEFG
 from hoops.data.paths import distributions_dir
 from hoops.data.rosters import Player, Roster
-from hoops.engine.lineup_rates import LineupRates, compute_lineup_rates
-from hoops.engine.policy import CoachPolicies, CoachPolicy, DefensiveScheme
+from hoops.engine.lineup_rates import compute_lineup_rates
 from hoops.engine.machine import simulate_game, simulate_possession
+from hoops.engine.policy import CoachPolicies, CoachPolicy, DefensiveScheme
 from hoops.engine.sampling import make_rng
-from hoops.engine.state import GameState, Side
+from hoops.engine.state import GameState
 from hoops.league import League
 from hoops.rules import rules_for
 
@@ -61,7 +62,7 @@ def test_simulate_game_is_byte_identical_under_fixed_seed():
     s2, e2 = simulate_game(home, away, RULES_2023_24, make_rng(seed=42))
     assert (s1.home_score, s1.away_score) == (s2.home_score, s2.away_score)
     assert len(e1) == len(e2)
-    for a, b in zip(e1, e2):
+    for a, b in zip(e1, e2, strict=True):
         assert a == b
 
 
@@ -185,7 +186,7 @@ def test_overtime_only_when_regulation_tied():
         # OT only if there was actually a tie at end of Q4. The structural
         # event log carries that signal: an "overtime_start" event must
         # have followed a Q4 "quarter_end" with equal scores.
-        for e_prev, e in zip(events, events[1:]):
+        for e_prev, e in zip(events, events[1:], strict=False):
             if e.type == "overtime_start":
                 assert e_prev.type == "quarter_end"
                 assert e_prev.home_score == e_prev.away_score
@@ -298,8 +299,12 @@ def test_simulate_game_with_lineups_is_reproducible():
     away = _synthetic_team("Away", team_id=2)
     hr = _roster_for_engine(1, "Home")
     ar = _roster_for_engine(2, "Away")
-    s1, e1 = simulate_game(home, away, RULES_2023_24, make_rng(seed=99), home_roster=hr, away_roster=ar)
-    s2, e2 = simulate_game(home, away, RULES_2023_24, make_rng(seed=99), home_roster=hr, away_roster=ar)
+    s1, e1 = simulate_game(
+        home, away, RULES_2023_24, make_rng(seed=99), home_roster=hr, away_roster=ar
+    )
+    s2, e2 = simulate_game(
+        home, away, RULES_2023_24, make_rng(seed=99), home_roster=hr, away_roster=ar
+    )
     assert (s1.home_score, s1.away_score) == (s2.home_score, s2.away_score)
     assert len(e1) == len(e2)
 
@@ -309,7 +314,9 @@ def test_simulate_game_with_lineups_produces_realistic_scores():
     away = _synthetic_team("Away", team_id=2)
     hr = _roster_for_engine(1, "Home")
     ar = _roster_for_engine(2, "Away")
-    state, _ = simulate_game(home, away, RULES_2023_24, make_rng(seed=42), home_roster=hr, away_roster=ar)
+    state, _ = simulate_game(
+        home, away, RULES_2023_24, make_rng(seed=42), home_roster=hr, away_roster=ar
+    )
     total = state.home_score + state.away_score
     assert 80 <= total <= 220, f"unrealistic combined score: {total}"
 
@@ -321,7 +328,9 @@ def test_game_with_lineups_always_ends(seed):
     away = _synthetic_team("Away", team_id=2)
     hr = _roster_for_engine(1, "Home")
     ar = _roster_for_engine(2, "Away")
-    state, events = simulate_game(home, away, RULES_2023_24, make_rng(seed=seed), home_roster=hr, away_roster=ar)
+    state, events = simulate_game(
+        home, away, RULES_2023_24, make_rng(seed=seed), home_roster=hr, away_roster=ar
+    )
     assert state.is_final
 
 
@@ -348,8 +357,13 @@ def test_simulate_game_fatigue_can_be_disabled():
     away = _synthetic_team("Away", team_id=2)
     hr = _roster_for_engine(1, "Home")
     ar = _roster_for_engine(2, "Away")
-    s_on, _ = simulate_game(home, away, RULES_2023_24, make_rng(seed=42), home_roster=hr, away_roster=ar)
-    s_off, _ = simulate_game(home, away, RULES_2023_24, make_rng(seed=42), home_roster=hr, away_roster=ar, enable_fatigue=False)
+    s_on, _ = simulate_game(
+        home, away, RULES_2023_24, make_rng(seed=42), home_roster=hr, away_roster=ar
+    )
+    s_off, _ = simulate_game(
+        home, away, RULES_2023_24, make_rng(seed=42),
+        home_roster=hr, away_roster=ar, enable_fatigue=False,
+    )
     # With fatigue on by default, the two runs diverge once subs happen.
     # Both should still finish as valid games.
     assert s_on.is_final

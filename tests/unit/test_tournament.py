@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import numpy as np
-import pytest
 
 from hoops.data.distributions import ShotMix, TeamPriors, ZoneEFG
 from hoops.engine.bracket import Bracket
