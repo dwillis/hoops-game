@@ -43,6 +43,13 @@ def test_floor_spacer_detected():
     assert detect_archetype(p) == "floor_spacer"
 
 
+def test_versatile_wing_detected():
+    """Regression: versatile_wing existed in the affinity table but was
+    never returned by detect_archetype()."""
+    p = _player(6, "Glue Wing", fg3a_share=0.30, stl_pct=2.5, drb_pct=11.0)
+    assert detect_archetype(p) == "versatile_wing"
+
+
 def test_default_archetype():
     p = _player(5, "Role Player")
     assert detect_archetype(p) == "default"

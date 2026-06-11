@@ -112,13 +112,11 @@ class PlaybackState:
     # allows entry on a dead ball, so `b` no-ops elsewhere.
     is_dead_ball: bool = False
 
-    is_dead_ball: bool = False
-
     _prev_quarter: int = 1
     _prev_seconds_left: int = 600
 
     @classmethod
-    def from_events(cls, events: list[Event], lineup: object | None = None) -> "PlaybackState":
+    def from_events(cls, events: list[Event], lineup: object | None = None) -> PlaybackState:
         if not events:
             raise ValueError("events list is empty; nothing to play back")
         s = cls(events=tuple(events), lineup=lineup)

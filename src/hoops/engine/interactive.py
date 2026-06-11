@@ -283,16 +283,7 @@ class InteractiveGame:
     def set_scheme(self, side: Side, scheme: DefensiveScheme) -> None:
         """Set defensive scheme for the given side (works in any mode)."""
         old = self.policies.for_side(side)
-        new_policy = CoachPolicy(
-            scheme=scheme,
-            off_scheme=old.off_scheme,
-            two_for_one=old.two_for_one,
-            hold_for_last=old.hold_for_last,
-            foul_when_down_3=old.foul_when_down_3,
-            intentional_foul_in_bonus_when_trailing=old.intentional_foul_in_bonus_when_trailing,
-            timeouts_remaining=old.timeouts_remaining,
-        )
-        self._replace_policy(side, new_policy)
+        self._replace_policy(side, dataclasses.replace(old, scheme=scheme))
         self._recompute_lineup_rates()
 
     def set_human_scheme(self, scheme: DefensiveScheme) -> None:
@@ -302,16 +293,7 @@ class InteractiveGame:
     def set_off_scheme(self, side: Side, scheme: OffensiveScheme) -> None:
         """Set offensive scheme for the given side (works in any mode)."""
         old = self.policies.for_side(side)
-        new_policy = CoachPolicy(
-            scheme=old.scheme,
-            off_scheme=scheme,
-            two_for_one=old.two_for_one,
-            hold_for_last=old.hold_for_last,
-            foul_when_down_3=old.foul_when_down_3,
-            intentional_foul_in_bonus_when_trailing=old.intentional_foul_in_bonus_when_trailing,
-            timeouts_remaining=old.timeouts_remaining,
-        )
-        self._replace_policy(side, new_policy)
+        self._replace_policy(side, dataclasses.replace(old, off_scheme=scheme))
 
     def set_human_off_scheme(self, scheme: OffensiveScheme) -> None:
         assert self.human_side is not None, "use set_off_scheme() in H2H mode"
@@ -320,16 +302,7 @@ class InteractiveGame:
     def _set_cpu_scheme(self, scheme: DefensiveScheme) -> None:
         """Change the CPU side's defensive scheme."""
         old = self.cpu_policy()
-        new_policy = CoachPolicy(
-            scheme=scheme,
-            off_scheme=old.off_scheme,
-            two_for_one=old.two_for_one,
-            hold_for_last=old.hold_for_last,
-            foul_when_down_3=old.foul_when_down_3,
-            intentional_foul_in_bonus_when_trailing=old.intentional_foul_in_bonus_when_trailing,
-            timeouts_remaining=old.timeouts_remaining,
-        )
-        self._replace_policy(self.cpu_side, new_policy)
+        self._replace_policy(self.cpu_side, dataclasses.replace(old, scheme=scheme))
         self._recompute_lineup_rates()
 
     _TIMEOUT_REST_SECONDS = 60.0
@@ -344,18 +317,10 @@ class InteractiveGame:
             raise ValueError("game is over")
 
         # Decrement timeout count.
-        new_policy = CoachPolicy(
-            scheme=policy.scheme,
-            two_for_one=policy.two_for_one,
-            hold_for_last=policy.hold_for_last,
-            foul_when_down_3=policy.foul_when_down_3,
-            intentional_foul_in_bonus_when_trailing=policy.intentional_foul_in_bonus_when_trailing,
-            timeouts_remaining=policy.timeouts_remaining - 1,
+        new_policy = dataclasses.replace(
+            policy, timeouts_remaining=policy.timeouts_remaining - 1
         )
-        if side is Side.HOME:
-            self.policies = CoachPolicies(home=new_policy, away=self.policies.away)
-        else:
-            self.policies = CoachPolicies(home=self.policies.home, away=new_policy)
+        self._replace_policy(side, new_policy)
 
         # Fatigue recovery for ALL on-court players (both teams benefit).
         home_on = [p.player_id for p in self.lineup.on_court(Side.HOME)]

@@ -42,7 +42,7 @@ from hoops.data.rosters import Roster, load_roster
 from hoops.engine.events import Event, fmt_clock, fmt_event
 from hoops.engine.policy import CoachPolicies, CoachPolicy, DefensiveScheme, OffensiveScheme
 from hoops.engine.sampling import make_rng
-from hoops.ui.lineup import LineupState
+from hoops.ui.lineup import LineupError, LineupState
 
 
 def _short_season(season: str) -> str:
@@ -927,8 +927,8 @@ class SubScreen(Screen):
                 off_player_id=post_on_court[self._pull_idx].player_id,
                 on_player_id=bench[i].player_id,
             )
-        except Exception:
-            pass
+        except LineupError as exc:
+            self.app.notify(str(exc), severity="warning")
         self._pull_idx = None
         self._refresh()
 

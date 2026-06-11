@@ -131,6 +131,18 @@ class FatigueTracker:
 # Substitution decision engine
 # ---------------------------------------------------------------------------
 
+def foul_trouble_limit(quarter: int, rank: int) -> int:
+    """Foul count at which a player should be pulled to protect them.
+
+    Single source of truth shared by the fatigue auto-sub engine and the
+    CPU coach: stars (importance rank 0-1) are protected at 3 fouls in
+    the first half, role players at 2; everyone at 4 in the second half.
+    """
+    if quarter <= 2:
+        return 3 if rank < 2 else _FOUL_TROUBLE_FIRST_HALF
+    return _FOUL_TROUBLE_SECOND_HALF
+
+
 def _fatigue_threshold(rank: int) -> float:
     """Return the fatigue threshold for a player at the given importance rank."""
     if rank < 2:
@@ -181,16 +193,9 @@ def check_substitutions(
             continue
 
         # Foul trouble check (strategic — always pull to protect).
-        first_half = quarter <= 2
-        if first_half:
-            limit = 3 if rank < 2 else _FOUL_TROUBLE_FIRST_HALF
-            if fouls >= limit:
-                needs_sub.append((p, "foul_trouble"))
-                continue
-        else:
-            if fouls >= _FOUL_TROUBLE_SECOND_HALF:
-                needs_sub.append((p, "foul_trouble"))
-                continue
+        if fouls >= foul_trouble_limit(quarter, rank):
+            needs_sub.append((p, "foul_trouble"))
+            continue
 
         # Fatigue check.
         threshold = _fatigue_threshold(rank)

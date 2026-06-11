@@ -12,8 +12,8 @@ from dataclasses import dataclass
 from enum import Enum
 
 from hoops.data.rosters import Player
-from hoops.engine.fatigue import player_importance
-from hoops.engine.policy import DefensiveScheme, OffensiveScheme
+from hoops.engine.fatigue import foul_trouble_limit, player_importance
+from hoops.engine.policy import CoachPolicy, DefensiveScheme, OffensiveScheme
 from hoops.engine.scheme_affinity import detect_archetype
 from hoops.engine.state import Side
 
@@ -81,7 +81,7 @@ class TrendTracker:
         ]
 
     @classmethod
-    def from_list(cls, data: list[dict], window: int = 10) -> "TrendTracker":
+    def from_list(cls, data: list[dict], window: int = 10) -> TrendTracker:
         t = cls(window=window)
         for d in data:
             t.record(PossessionSummary(
@@ -353,7 +353,7 @@ class CpuCoach:
 
     def update_late_game_policy(
         self,
-        policy: "CoachPolicy",
+        policy: CoachPolicy,
         quarter: int,
         seconds_left: int,
         cpu_score: int,
@@ -406,8 +406,9 @@ class CpuCoach:
         """Return (off_id, on_id) pairs for foul-trouble subs.
 
         Rules:
-        - First half (Q1-Q2): pull any on-court player with 3+ fouls.
-        - Second half (Q3-Q4): pull any on-court player with 4+ fouls.
+        - Foul limits come from :func:`fatigue.foul_trouble_limit`, the
+          shared source of truth: stars at 3 / role players at 2 in the
+          first half, everyone at 4 in the second half.
         - Crunch-time exception (personality-dependent): don't pull in Q4 late.
           - AGGRESSIVE: crunch-time exception at <=4:00 (240s)
           - BALANCED: crunch-time exception at <=2:00 (120s)
@@ -423,13 +424,15 @@ class CpuCoach:
         if quarter >= 4 and crunch_cutoff > 0 and seconds_left <= crunch_cutoff:
             return []
 
-        # Foul limit depends on half.
-        foul_limit = 3 if quarter <= 2 else 4
+        # Rank on-court players by importance, mirroring the fatigue engine.
+        ranked = sorted(on_court, key=player_importance, reverse=True)
+        rank_of = {p.player_id: i for i, p in enumerate(ranked)}
 
         # Find on-court players in foul trouble.
         troubled = [
             p for p in on_court
-            if fouls.get(p.player_id, 0) >= foul_limit
+            if fouls.get(p.player_id, 0)
+            >= foul_trouble_limit(quarter, rank_of[p.player_id])
         ]
         if not troubled or not bench:
             return []

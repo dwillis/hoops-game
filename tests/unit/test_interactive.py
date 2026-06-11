@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import pytest
-import numpy as np
 
 from hoops.data.rosters import Player, Roster
+from hoops.engine.cpu_coach import CpuPersonality
 from hoops.engine.interactive import InteractiveGame, PossessionResult
-from hoops.engine.policy import CoachPolicies, DefensiveScheme
+from hoops.engine.policy import DefensiveScheme
 from hoops.engine.state import Side
 from hoops.rules import Rules
 
@@ -37,7 +37,7 @@ def _roster(team_id, name, n=10):
 
 
 def _make_game(seed=42, human_side=Side.HOME):
-    from hoops.data.distributions import TeamPriors, ShotMix, ZoneEFG
+    from hoops.data.distributions import ShotMix, TeamPriors, ZoneEFG
     from hoops.engine.sampling import make_rng
     from hoops.league import League
 
@@ -82,7 +82,7 @@ def test_game_completes():
     game = _make_game()
     poss = 0
     while not game.is_game_over:
-        result = game.step_possession()
+        game.step_possession()
         poss += 1
         assert poss < 500
     assert game.state.home_score >= 0
@@ -163,7 +163,7 @@ def test_call_timeout_grants_fatigue_recovery():
     assert any(f > 0 for f in fatigue_before)
     game.call_timeout(Side.HOME)
     fatigue_after = [game.fatigue.fatigue(p.player_id) for p in on_court]
-    for before, after in zip(fatigue_before, fatigue_after):
+    for before, after in zip(fatigue_before, fatigue_after, strict=True):
         assert after <= before
 
 
@@ -176,6 +176,21 @@ def test_call_timeout_with_zero_remaining_raises():
     assert game.human_policy().timeouts_remaining == 0
     with pytest.raises(ValueError, match="no timeouts remaining"):
         game.call_timeout(game.human_side)
+
+
+def test_call_timeout_preserves_schemes():
+    """Regression: call_timeout() used to rebuild CoachPolicy without
+    off_scheme, silently resetting the offensive scheme to NORMAL."""
+    from hoops.engine.policy import OffensiveScheme
+
+    game = _make_game()
+    game.set_scheme(Side.HOME, DefensiveScheme.ZONE)
+    game.set_off_scheme(Side.HOME, OffensiveScheme.HURRY_UP)
+    game.call_timeout(Side.HOME)
+    policy = game.policies.for_side(Side.HOME)
+    assert policy.off_scheme is OffensiveScheme.HURRY_UP
+    assert policy.scheme is DefensiveScheme.ZONE
+    assert policy.timeouts_remaining == 3
 
 
 def test_media_timeout_fires_under_five_minutes():
@@ -269,9 +284,6 @@ def test_save_and_load_roundtrip():
     if not game2.is_game_over:
         result = game2.step_possession()
         assert isinstance(result, PossessionResult)
-
-
-from hoops.engine.cpu_coach import CpuPersonality
 
 
 def test_game_has_cpu_coach():

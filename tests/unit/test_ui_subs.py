@@ -148,6 +148,43 @@ async def test_sub_screen_queues_substitution():
 
 
 @pytest.mark.asyncio
+async def test_sub_screen_notifies_on_lineup_error():
+    """Regression: a failed substitution used to be silently swallowed
+    (`except Exception: pass`); it must surface a notification instead."""
+    from hoops.ui.lineup import LineupError
+
+    home = _roster(1, "H", n=8)
+    away = _roster(2, "A", n=8)
+    rng = np.random.default_rng(0)
+    lineup = LineupState.with_default_starters(home, away, rng)
+
+    def _boom(*args, **kwargs):
+        raise LineupError("player 6 would already be on the floor")
+
+    lineup.request_substitution = _boom
+
+    sub = SubScreen(lineup, "H", "A")
+
+    from textual.app import App
+
+    notices: list[str] = []
+
+    class _Host(App):
+        def on_mount(self):
+            self.push_screen(sub)
+
+        def notify(self, message, **kw):
+            notices.append(message)
+
+    app = _Host()
+    async with app.run_test(size=(120, 40)) as pilot:
+        await pilot.pause()
+        sub.action_pull("0")
+        sub.action_send_in("0")
+        assert notices and "already be on the floor" in notices[0]
+
+
+@pytest.mark.asyncio
 async def test_sub_screen_switches_sides_with_tab():
     home = _roster(1, "H", n=8)
     away = _roster(2, "A", n=8)
@@ -174,7 +211,6 @@ async def test_sub_screen_switches_sides_with_tab():
 async def test_subs_on_home_screen_take_effect_in_subsequent_attribution():
     """End-to-end: pull a starter, sim a possession, the new starter
     should be eligible for attribution and the pulled one should not."""
-    home = _roster(1, "Home", n=8)
     away = _roster(2, "Away", n=8)
     rng = np.random.default_rng(0)
     # Construct a lineup where only player_id=6 has nonzero FGA after sub-in,

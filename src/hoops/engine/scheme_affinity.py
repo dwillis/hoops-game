@@ -14,13 +14,15 @@ from hoops.engine.policy import DefensiveScheme
 # ---------------------------------------------------------------------------
 # Affinity table: archetype → {scheme: multiplier}
 # ---------------------------------------------------------------------------
+_DS = DefensiveScheme
+
 _AFFINITY: dict[str, dict[DefensiveScheme, float]] = {
-    "rim_protector":     {DefensiveScheme.MAN: 1.00, DefensiveScheme.ZONE: 1.15, DefensiveScheme.PRESS: 0.90},
-    "perimeter_stopper": {DefensiveScheme.MAN: 1.10, DefensiveScheme.ZONE: 0.95, DefensiveScheme.PRESS: 1.15},
-    "ball_handler":      {DefensiveScheme.MAN: 1.00, DefensiveScheme.ZONE: 1.00, DefensiveScheme.PRESS: 1.10},
-    "floor_spacer":      {DefensiveScheme.MAN: 1.00, DefensiveScheme.ZONE: 0.95, DefensiveScheme.PRESS: 1.00},
-    "versatile_wing":    {DefensiveScheme.MAN: 1.05, DefensiveScheme.ZONE: 1.00, DefensiveScheme.PRESS: 1.05},
-    "default":           {DefensiveScheme.MAN: 1.00, DefensiveScheme.ZONE: 1.00, DefensiveScheme.PRESS: 1.00},
+    "rim_protector":     {_DS.MAN: 1.00, _DS.ZONE: 1.15, _DS.PRESS: 0.90},
+    "perimeter_stopper": {_DS.MAN: 1.10, _DS.ZONE: 0.95, _DS.PRESS: 1.15},
+    "ball_handler":      {_DS.MAN: 1.00, _DS.ZONE: 1.00, _DS.PRESS: 1.10},
+    "floor_spacer":      {_DS.MAN: 1.00, _DS.ZONE: 0.95, _DS.PRESS: 1.00},
+    "versatile_wing":    {_DS.MAN: 1.05, _DS.ZONE: 1.00, _DS.PRESS: 1.05},
+    "default":           {_DS.MAN: 1.00, _DS.ZONE: 1.00, _DS.PRESS: 1.00},
 }
 
 
@@ -46,6 +48,10 @@ def detect_archetype(p: Player) -> str:
         return "ball_handler"
     if fg3a_share >= 0.45 and stl_pct < 4.0:
         return "floor_spacer"
+    # Solid-across-the-board wing: some perimeter shooting, steals, and
+    # rebounding, without meeting any specialist threshold above.
+    if fg3a_share >= 0.25 and stl_pct >= 2.0 and drb_pct >= 10.0:
+        return "versatile_wing"
     return "default"
 
 
