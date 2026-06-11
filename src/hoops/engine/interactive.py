@@ -169,6 +169,7 @@ class PossessionResult:
     events: list[Event]
     is_dead_ball: bool
     is_game_over: bool
+    subs_allowed: bool = True
 
 
 class InteractiveGame:
@@ -567,8 +568,22 @@ class InteractiveGame:
             for e in evs
         )
 
+        # NCAA rule: no subs after a made FG in the last 59.9s of Q4/OT
+        # unless a foul, violation, or timeout also occurred.
+        subs_allowed = True
+        if is_dead and self.state.quarter >= 4 and self.state.seconds_left <= 59.9:
+            had_foul = any(e.type in ("foul_personal", "foul_shooting") for e in evs)
+            had_ft = any(e.type in ("free_throw_made", "free_throw_missed") for e in evs)
+            only_made_fg = (
+                any(e.type == "shot_made" for e in evs)
+                and not had_foul
+                and not had_ft
+            )
+            if only_made_fg:
+                subs_allowed = False
+
         # Auto-subs at dead balls
-        if is_dead:
+        if is_dead and subs_allowed:
             if self.cpu_coach is not None:
                 # CPU timeout decision (before regular auto-subs since TO triggers its own).
                 if self._cpu_should_call_timeout():
@@ -712,6 +727,7 @@ class InteractiveGame:
             events=result_events,
             is_dead_ball=is_dead,
             is_game_over=False,
+            subs_allowed=subs_allowed,
         )
 
     def _cpu_auto_subs(self) -> list[Event]:

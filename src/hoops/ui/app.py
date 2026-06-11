@@ -1149,6 +1149,7 @@ class CoachGameScreen(Screen):
         }
         self._sub_queue: list[Side] = []
         self._at_dead_ball: bool = False
+        self._subs_allowed: bool = True
         self.playback = PlaybackState.from_events(
             list(self.game.all_events), lineup=self.game.lineup,
         )
@@ -1276,6 +1277,7 @@ class CoachGameScreen(Screen):
         if self.game.is_game_over:
             return
         self._at_dead_ball = False
+        self._subs_allowed = True
 
         if self.h2h_mode and self._awaiting_away:
             # Away coach pressed Space -> advance possession
@@ -1285,7 +1287,11 @@ class CoachGameScreen(Screen):
             self._sync_events(result.events)
             if self._is_stoppage(result) and not self.game.is_game_over:
                 self._at_dead_ball = True
-                self._open_subs_if_requested()
+                self._subs_allowed = result.subs_allowed
+                if self._subs_allowed:
+                    self._open_subs_if_requested()
+                else:
+                    self._clear_sub_requests()
                 self._active_coach = Side.HOME
                 self._update_coach_bar()
             self._check_game_over()
@@ -1300,7 +1306,11 @@ class CoachGameScreen(Screen):
             self._sync_events(result.events)
             if self._is_stoppage(result) and not self.game.is_game_over:
                 self._at_dead_ball = True
-                self._open_subs_if_requested()
+                self._subs_allowed = result.subs_allowed
+                if self._subs_allowed:
+                    self._open_subs_if_requested()
+                else:
+                    self._clear_sub_requests()
                 self._update_coach_bar()
             self._check_game_over()
 
@@ -1359,8 +1369,15 @@ class CoachGameScreen(Screen):
             self._sync_events(result.events)
         self._check_game_over()
 
+    def _clear_sub_requests(self) -> None:
+        for side in (Side.HOME, Side.AWAY):
+            self._sub_requested[side] = False
+
     def action_open_subs(self) -> None:
         if self.game.is_game_over:
+            return
+        if self._at_dead_ball and not self._subs_allowed:
+            self.notify("No subs after made FG in last minute.", timeout=2.0)
             return
         sub_side = self._active_coach if self.h2h_mode else self.game.human_side
         if self._at_dead_ball:
