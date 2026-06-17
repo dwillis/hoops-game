@@ -136,26 +136,31 @@ def _zone_make_prob(off: TeamPriors, zone: str) -> float:
     return {"rim": off.zone_efg.rim, "mid": off.zone_efg.mid, "three": off.zone_efg.three}[zone]
 
 
-def _shot_foul_prob(off: TeamPriors) -> float:
-    """Per-shot probability of a shooting foul on the offense's attempt.
+_ZONE_FOUL_MULT_RAW: dict[str, float] = {"rim": 2.5, "mid": 0.7, "three": 0.15}
 
-    With v0's "all FTAs come from shooting fouls" simplification, expected
-    FTAs per shot attempt should match the team's FTR. Each foul produces:
-    - 1 FT on a make (and-1)
-    - 2 FT on a missed 2-point attempt
-    - 3 FT on a missed 3-point attempt
 
-    Mix-weighted, this averages to ~1.6-1.8 FTs per foul. We divide by the
-    *team-specific* expectation so the simulated FTR matches the input.
+def _zone_eft(zone: str, efg: float) -> float:
+    """Expected free throws per shooting foul in a given zone."""
+    return (3 - 2 * efg) if zone == "three" else (2 - efg)
+
+
+def _shot_foul_prob(off: TeamPriors, zone: str) -> float:
+    """Per-shot probability of a shooting foul, adjusted by zone.
+
+    Zone multipliers are normalized so the mix-weighted expected FTA
+    (not just foul rate) matches off_fta_rate.
     """
-    e_per_foul = (
-        off.shot_mix.rim * (2 - off.zone_efg.rim)
-        + off.shot_mix.mid * (2 - off.zone_efg.mid)
-        + off.shot_mix.three * (3 - 2 * off.zone_efg.three)
+    efg = {"rim": off.zone_efg.rim, "mid": off.zone_efg.mid, "three": off.zone_efg.three}
+    mix = {"rim": off.shot_mix.rim, "mid": off.shot_mix.mid, "three": off.shot_mix.three}
+
+    weighted_denom = sum(
+        mix[z] * _ZONE_FOUL_MULT_RAW[z] * _zone_eft(z, efg[z])
+        for z in ("rim", "mid", "three")
     )
-    if e_per_foul <= 0:
+    if weighted_denom <= 0:
         return 0.0
-    return min(0.25, off.off_fta_rate / e_per_foul)
+    alpha = off.off_fta_rate / weighted_denom
+    return min(0.50, alpha * _ZONE_FOUL_MULT_RAW[zone])
 
 
 def _sample_two_free_throws(off: TeamPriors, rng: np.random.Generator) -> tuple[int, list[bool]]:
@@ -310,7 +315,7 @@ def simulate_possession(
     # Shooting foul check before the make/miss roll. If the defense fouls
     # on the shot, the shot still happens; if it goes in, the offense
     # gets one extra free throw, otherwise they shoot ``points``.
-    shot_foul = rng.random() < _shot_foul_prob(off)
+    shot_foul = rng.random() < _shot_foul_prob(off, zone)
     if shot_foul:
         # Shooting foul accrues to the defense's per-quarter team fouls.
         state = state.add_team_foul(off_side.other)

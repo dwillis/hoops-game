@@ -11,11 +11,26 @@ from __future__ import annotations
 
 from dataclasses import replace
 
+from hoops.data.distributions import ShotMix, TeamPriors, ZoneEFG
 from hoops.engine.clock import end_period
 from hoops.engine.fouls import is_in_bonus
+from hoops.engine.machine import _shot_foul_prob
 from hoops.engine.state import GameState, Side
 from hoops.league import League
 from hoops.rules import rules_for
+
+
+def _team() -> TeamPriors:
+    return TeamPriors(
+        league=League.WBB, season="2023-24", team_id=1, team_name="Test",
+        pace=70.0,
+        off_efg=0.45, off_tov_pct=0.18, off_orb_pct=0.30,
+        off_fta_rate=0.30, off_3pt_rate=0.30, off_ft_pct=0.70,
+        def_efg=0.45, def_tov_pct=0.18, def_orb_pct=0.30, def_fta_rate=0.30,
+        shot_mix=ShotMix(rim=0.35, mid=0.30, three=0.35),
+        zone_efg=ZoneEFG(rim=0.55, mid=0.35, three=0.32),
+        foul_rate_per_100=20.0,
+    )
 
 
 def _state() -> GameState:
@@ -79,3 +94,31 @@ def test_only_offensive_team_in_bonus_via_defenders_fouls():
         s = s.add_team_foul(Side.HOME)
     assert is_in_bonus(s, Side.AWAY)
     assert not is_in_bonus(s, Side.HOME)
+
+
+# --- zone-based shooting foul probability ------------------------------------
+
+
+def test_three_point_foul_prob_lower_than_rim():
+    team = _team()
+    p_rim = _shot_foul_prob(team, "rim")
+    p_mid = _shot_foul_prob(team, "mid")
+    p_three = _shot_foul_prob(team, "three")
+    assert p_rim > p_mid > p_three
+    assert p_three < p_rim / 5
+
+
+def test_zone_foul_probs_preserve_aggregate_fta_rate():
+    """Mix-weighted expected FTA should equal the team's off_fta_rate."""
+    team = _team()
+    efg = {"rim": team.zone_efg.rim, "mid": team.zone_efg.mid, "three": team.zone_efg.three}
+    mix = {"rim": team.shot_mix.rim, "mid": team.shot_mix.mid, "three": team.shot_mix.three}
+    eft = {
+        "rim": 2 - efg["rim"], "mid": 2 - efg["mid"],
+        "three": 3 - 2 * efg["three"],
+    }
+    total_fta_rate = sum(
+        mix[z] * _shot_foul_prob(team, z) * eft[z]
+        for z in ("rim", "mid", "three")
+    )
+    assert abs(total_fta_rate - team.off_fta_rate) < 1e-10

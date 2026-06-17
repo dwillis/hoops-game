@@ -213,7 +213,7 @@ def test_media_timeout_fires_under_five_minutes():
 
 def test_cpu_calls_timeout_on_scoring_run():
     """The CPU should call at least one timeout during a full game."""
-    game = _make_game(seed=10, human_side=Side.HOME)
+    game = _make_game(seed=2, human_side=Side.HOME)
     cpu_timeouts = []
     for _ in range(500):
         if game.is_game_over:

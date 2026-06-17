@@ -66,7 +66,6 @@ def _simulated_marginals(team_id: int, opp_team_id: int, n_poss: int = 20_000) -
     fga = fgm = fg3a = fg3m = fta = orb = drb = tov = 0
     from hoops.engine.machine import _shot_foul_prob
     p_tov = max(0.0, min(0.5, off.off_tov_pct))
-    p_shot_foul = _shot_foul_prob(off)
 
     poss = 0
     while poss < n_poss:
@@ -80,7 +79,7 @@ def _simulated_marginals(team_id: int, opp_team_id: int, n_poss: int = 20_000) -
         is_three = zone == "three"
         if is_three:
             fg3a += 1
-        shot_foul = rng.random() < p_shot_foul
+        shot_foul = rng.random() < _shot_foul_prob(off, zone)
         zone_efg = {
             "rim": off.zone_efg.rim, "mid": off.zone_efg.mid, "three": off.zone_efg.three
         }[zone]
