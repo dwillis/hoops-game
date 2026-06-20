@@ -15,15 +15,15 @@ if TYPE_CHECKING:
 MAX_STAMINA: float = 2824.0
 
 # --- Substitution thresholds ------------------------------------------------
-_FATIGUE_THRESHOLD_HIGH = 0.85   # top 2 importance
-_FATIGUE_THRESHOLD_MED = 0.70    # 3rd-5th
-_FATIGUE_THRESHOLD_LOW = 0.55    # 6th+
+_THRESHOLD_FRACTION = 0.85       # sub at 85% of expected playing-time fatigue
+_DEFAULT_MIN_SHARE = 0.10        # fallback for players with no min_share data
+_MIN_THRESHOLD = 0.15            # floor: everyone can play ~7 min before fatigue sub
+_RECOVERY_MULTIPLIER = 2.0       # bench recovery is 2× accumulation rate
 _FOUL_TROUBLE_FIRST_HALF = 2    # Q1/Q2: 2+ fouls for non-stars
 _FOUL_TROUBLE_SECOND_HALF = 4   # Q3/Q4: 4+ fouls
 _FOULED_OUT = 5                  # WBB disqualification
-_STAR_BONUS = 1.20               # Stars are 20% harder to pull
-_SUB_COOLDOWN = 2                # possessions before a subbed player can change status again
-_SUB_COOLDOWN_STAR = 1           # stars can re-enter faster
+_SUB_COOLDOWN = 10               # possessions before a subbed player can change status again
+_SUB_COOLDOWN_STAR = 8           # stars can re-enter faster
 
 
 @dataclasses.dataclass(frozen=True)
@@ -103,7 +103,7 @@ class FatigueTracker:
 
     def rest(self, bench_ids: list[int], duration_seconds: float) -> None:
         """Recover fatigue for benched players (2x recovery rate)."""
-        decrement = (duration_seconds / MAX_STAMINA) * 2.0
+        decrement = (duration_seconds / MAX_STAMINA) * _RECOVERY_MULTIPLIER
         for pid in bench_ids:
             self._fatigue[pid] = max(0.0, self._fatigue[pid] - decrement)
 
@@ -143,13 +143,16 @@ def foul_trouble_limit(quarter: int, rank: int) -> int:
     return _FOUL_TROUBLE_SECOND_HALF
 
 
-def _fatigue_threshold(rank: int) -> float:
-    """Return the fatigue threshold for a player at the given importance rank."""
-    if rank < 2:
-        return _FATIGUE_THRESHOLD_HIGH
-    if rank < 5:
-        return _FATIGUE_THRESHOLD_MED
-    return _FATIGUE_THRESHOLD_LOW
+def player_fatigue_threshold(p: Player) -> float:
+    """Return the fatigue level at which *p* should be subbed out.
+
+    Derived from the player's historical minutes share so high-minutes
+    players have higher thresholds and get subbed later.
+    """
+    ms = p.min_share if p.min_share is not None else _DEFAULT_MIN_SHARE
+    target_minutes = ms * 200.0  # 5 slots × 40 min
+    target_fatigue = target_minutes * 60 / MAX_STAMINA
+    return max(_MIN_THRESHOLD, target_fatigue * _THRESHOLD_FRACTION)
 
 
 def check_substitutions(
@@ -197,15 +200,17 @@ def check_substitutions(
             needs_sub.append((p, "foul_trouble"))
             continue
 
-        # Fatigue check.
-        threshold = _fatigue_threshold(rank)
+        # Fatigue check — per-player threshold from min_share.
+        threshold = player_fatigue_threshold(p)
         if fatigue >= threshold:
             needs_sub.append((p, "fatigue"))
             continue
 
-    # Sort bench by importance (best available first), excluding cooldown players.
+    # Sort bench by importance (best available first), excluding cooldown and fouled-out players.
     available_bench = sorted(
-        [bp for bp in bench if not tracker.on_cooldown(bp.player_id)],
+        [bp for bp in bench
+         if not tracker.on_cooldown(bp.player_id)
+         and tracker.fouls(bp.player_id) < _FOULED_OUT],
         key=player_importance, reverse=True,
     )
 
@@ -223,21 +228,7 @@ def check_substitutions(
         if replacement is None:
             break  # No more bench players available.
 
-        pid = p.player_id
-        rank = rank_of[pid]
-
-        # For fatigue-triggered star subs, compare contributions.
-        # Stars (rank < 2) get a 1.20x bonus making them harder to pull;
-        # if even after the bonus the star's importance exceeds the bench
-        # replacement, skip the sub. Non-stars who hit their fatigue
-        # threshold are always subbed.
-        if reason == "fatigue" and rank < 2:
-            tired_contrib = player_importance(p) * _STAR_BONUS
-            bench_contrib = player_importance(replacement)
-            if tired_contrib > bench_contrib:
-                continue  # Star still more valuable, skip sub.
-
-        subs.append(SubEvent(side=side, off_player_id=pid, on_player_id=replacement.player_id))
+        subs.append(SubEvent(side=side, off_player_id=p.player_id, on_player_id=replacement.player_id))
         used_bench_ids.add(replacement.player_id)
 
     return subs

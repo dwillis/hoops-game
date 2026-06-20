@@ -484,7 +484,7 @@ def test_hot_hand_veto_6_points():
         side=Side.AWAY, scored=True, points=3,
         zone="three", turnover=False, foul=False, player="Star",
     ))
-    assert coach.should_veto_fatigue_sub("Star", fatigue=0.72) is True
+    assert coach.should_veto_fatigue_sub("Star", fatigue=0.65, threshold=0.60) is True
 
 
 def test_hot_hand_no_veto_below_threshold():
@@ -498,11 +498,11 @@ def test_hot_hand_no_veto_below_threshold():
         side=Side.AWAY, scored=True, points=2,
         zone="mid", turnover=False, foul=False, player="Star",
     ))
-    assert coach.should_veto_fatigue_sub("Star", fatigue=0.72) is False
+    assert coach.should_veto_fatigue_sub("Star", fatigue=0.65, threshold=0.60) is False
 
 
 def test_hot_hand_no_veto_at_hard_ceiling():
-    """Even a hot player gets pulled at fatigue >= 0.85."""
+    """Even a hot player gets pulled when fatigue exceeds threshold + buffer."""
     coach = _make_coach()
     coach.trend.record(PossessionSummary(
         side=Side.AWAY, scored=True, points=3,
@@ -516,7 +516,7 @@ def test_hot_hand_no_veto_at_hard_ceiling():
         side=Side.AWAY, scored=True, points=3,
         zone="three", turnover=False, foul=False, player="Star",
     ))
-    assert coach.should_veto_fatigue_sub("Star", fatigue=0.86) is False
+    assert coach.should_veto_fatigue_sub("Star", fatigue=0.75, threshold=0.60) is False
 
 
 def test_hot_hand_aggressive_lower_threshold():
@@ -530,7 +530,7 @@ def test_hot_hand_aggressive_lower_threshold():
         side=Side.AWAY, scored=True, points=2,
         zone="mid", turnover=False, foul=False, player="Star",
     ))
-    assert coach.should_veto_fatigue_sub("Star", fatigue=0.72) is True
+    assert coach.should_veto_fatigue_sub("Star", fatigue=0.65, threshold=0.60) is True
 
 
 def test_hot_hand_conservative_higher_threshold():
@@ -544,7 +544,7 @@ def test_hot_hand_conservative_higher_threshold():
         side=Side.AWAY, scored=True, points=3,
         zone="three", turnover=False, foul=False, player="Star",
     ))
-    assert coach.should_veto_fatigue_sub("Star", fatigue=0.72) is False
+    assert coach.should_veto_fatigue_sub("Star", fatigue=0.65, threshold=0.60) is False
 
 
 # ---------------------------------------------------------------------------

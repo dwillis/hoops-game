@@ -33,6 +33,7 @@ from hoops.engine.events import Event
 from hoops.engine.fatigue import (
     FatigueTracker,
     check_substitutions,
+    player_fatigue_threshold,
 )
 from hoops.engine.lineup_rates import compute_lineup_rates
 from hoops.engine.machine import _player_name, _star_player_ids, simulate_possession
@@ -640,6 +641,7 @@ class InteractiveGame:
             cpu_on_court_ft, cpu_bench_ft, fouls_map,
             quarter=self.state.quarter,
             seconds_left=self.state.seconds_left,
+            fatigue_tracker=self.fatigue,
         )
         star_ids_ft = self._home_stars if self.cpu_side is Side.HOME else self._away_stars
         for off_id, on_id in foul_trouble_subs:
@@ -678,7 +680,7 @@ class InteractiveGame:
         # CPU matchup-based subs.
         cpu_on_court = self.lineup.on_court(self.cpu_side)
         cpu_bench = self.lineup.bench(self.cpu_side)
-        matchup_subs = self.cpu_coach.should_matchup_sub(cpu_on_court, cpu_bench)
+        matchup_subs = self.cpu_coach.should_matchup_sub(cpu_on_court, cpu_bench, self.fatigue)
         star_ids = self._home_stars if self.cpu_side is Side.HOME else self._away_stars
         for off_id, on_id in matchup_subs:
             result_events.append(self._apply_cpu_sub(off_id, on_id, star_ids))
@@ -735,6 +737,7 @@ class InteractiveGame:
             return []
 
         star_ids = self._home_stars if self.cpu_side is Side.HOME else self._away_stars
+        on_court_map = {p.player_id: p for p in self.lineup.on_court(self.cpu_side)}
         events: list[Event] = []
 
         for se in sub_events_data:
@@ -744,15 +747,18 @@ class InteractiveGame:
             if self.cpu_coach is not None:
                 fatigue_val = self.fatigue.fatigue(se.off_player_id)
                 fouls_val = self.fatigue.fouls(se.off_player_id)
-                # Determine if this is a foul-related sub (mandatory, not vetoable).
                 is_foul_sub = fouls_val >= 5 or (
                     (self.state.quarter <= 2 and fouls_val >= 3)
                     or (self.state.quarter > 2 and fouls_val >= 4)
                 )
-                if not is_foul_sub and self.cpu_coach.should_veto_fatigue_sub(
-                    off_name, fatigue_val
-                ):
-                    continue
+                if not is_foul_sub:
+                    player_obj = on_court_map.get(se.off_player_id)
+                    if player_obj is not None:
+                        threshold = player_fatigue_threshold(player_obj)
+                        if self.cpu_coach.should_veto_fatigue_sub(
+                            off_name, fatigue_val, threshold
+                        ):
+                            continue
 
             on_name = _player_name(se.on_player_id, se.side, self.home_roster, self.away_roster)
             self.lineup.substitute(se.side, se.off_player_id, se.on_player_id)

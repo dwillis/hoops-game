@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from enum import Enum
 
 from hoops.data.rosters import Player
-from hoops.engine.fatigue import foul_trouble_limit, player_importance
+from hoops.engine.fatigue import FatigueTracker, foul_trouble_limit, player_importance
 from hoops.engine.policy import CoachPolicy, DefensiveScheme, OffensiveScheme
 from hoops.engine.scheme_affinity import detect_archetype
 from hoops.engine.state import Side
@@ -122,7 +122,7 @@ def assign_personality(
 
 
 _SCHEME_COOLDOWN = 6  # possessions between scheme switches
-_HOT_HAND_HARD_CEILING = 0.85
+_HOT_HAND_CEILING_BUFFER = 0.10
 
 
 class CpuCoach:
@@ -273,6 +273,7 @@ class CpuCoach:
         self,
         on_court: list[Player],
         bench: list[Player],
+        fatigue_tracker: FatigueTracker | None = None,
     ) -> list[tuple[int, int]]:
         """Return (off_player_id, on_player_id) pairs for matchup-driven subs.
 
@@ -309,18 +310,24 @@ class CpuCoach:
         used_court: set[int] = set()
 
         for needed_archetype in needs:
-            # Find best bench player with the needed archetype.
+            # Find best bench player with the needed archetype (skip cooldown).
             candidate = None
             for bp, arch in bench_archetypes:
                 if arch == needed_archetype and bp.player_id not in used_bench:
+                    if fatigue_tracker is not None and (
+                        fatigue_tracker.on_cooldown(bp.player_id)
+                        or fatigue_tracker.fouls(bp.player_id) >= 5
+                    ):
+                        continue
                     candidate = bp
                     break
             if candidate is None:
                 continue
 
-            # Pull the least important on-court player.
+            # Pull the least important on-court player (skip cooldown).
             pullable = sorted(
-                [p for p in on_court if p.player_id not in used_court],
+                [p for p in on_court if p.player_id not in used_court
+                 and (fatigue_tracker is None or not fatigue_tracker.on_cooldown(p.player_id))],
                 key=player_importance,
             )
             if not pullable:
@@ -333,13 +340,14 @@ class CpuCoach:
 
         return subs
 
-    def should_veto_fatigue_sub(self, player_name: str, fatigue: float) -> bool:
+    def should_veto_fatigue_sub(self, player_name: str, fatigue: float, threshold: float) -> bool:
         """Return True if a hot hand should override a fatigue-triggered sub.
 
         The CPU coach keeps a tired-but-hot player on court if they scored
-        enough in the recent window and haven't hit the hard fatigue ceiling.
+        enough in the recent window and haven't exceeded the per-player
+        ceiling (threshold + buffer).
         """
-        if fatigue >= _HOT_HAND_HARD_CEILING:
+        if fatigue >= threshold + _HOT_HAND_CEILING_BUFFER:
             return False
 
         if self.personality is CpuPersonality.AGGRESSIVE:
@@ -402,6 +410,7 @@ class CpuCoach:
         fouls: dict[int, int],
         quarter: int,
         seconds_left: int,
+        fatigue_tracker: FatigueTracker | None = None,
     ) -> list[tuple[int, int]]:
         """Return (off_id, on_id) pairs for foul-trouble subs.
 
@@ -428,17 +437,24 @@ class CpuCoach:
         ranked = sorted(on_court, key=player_importance, reverse=True)
         rank_of = {p.player_id: i for i, p in enumerate(ranked)}
 
-        # Find on-court players in foul trouble.
+        # Find on-court players in foul trouble (skip cooldown unless fouled out).
         troubled = [
             p for p in on_court
             if fouls.get(p.player_id, 0)
             >= foul_trouble_limit(quarter, rank_of[p.player_id])
+            and (fatigue_tracker is None or not fatigue_tracker.on_cooldown(p.player_id)
+                 or fouls.get(p.player_id, 0) >= 5)
         ]
         if not troubled or not bench:
             return []
 
-        # Sort bench by importance (best first).
-        sorted_bench = sorted(bench, key=player_importance, reverse=True)
+        # Sort bench by importance (best first), skip cooldown and fouled-out players.
+        sorted_bench = sorted(
+            [bp for bp in bench
+             if (fatigue_tracker is None or not fatigue_tracker.on_cooldown(bp.player_id))
+             and fouls.get(bp.player_id, 0) < 5],
+            key=player_importance, reverse=True,
+        )
 
         subs: list[tuple[int, int]] = []
         bench_idx = 0

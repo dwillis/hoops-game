@@ -9,6 +9,7 @@ from hoops.engine.fatigue import (
     FatigueTracker,
     apply_fatigue,
     check_substitutions,
+    player_fatigue_threshold,
     player_importance,
 )
 from hoops.engine.state import Side
@@ -32,8 +33,8 @@ def _player(pid, name, minutes=200.0, **kw):
 def _roster(team_id, name, n=12):
     players = tuple(
         _player(team_id * 100 + i, f"{name}_P{i}",
-                usage_pct=0.25 - i * 0.02,
-                min_share=0.30 - i * 0.02)
+                usage_pct=0.25 - i * 0.015,
+                min_share=0.175 - i * 0.015)
         for i in range(n)
     )
     return Roster(team_id=team_id, team_name=name, players=players)
@@ -169,19 +170,21 @@ def test_sub_when_fatigued():
     ft = FatigueTracker(hr, ar)
     ls = _lineup_state(hr, ar)
     low_imp_pid = hr.players[4].player_id
-    ft._fatigue[low_imp_pid] = 0.80
+    ft._fatigue[low_imp_pid] = 0.50  # above P4's threshold (~0.415)
     subs = check_substitutions(ls, ft, quarter=1, side=Side.HOME)
     assert len(subs) >= 1
     assert any(s.off_player_id == low_imp_pid for s in subs)
 
 
-def test_star_stays_longer_when_fatigued():
+def test_high_minute_player_stays_longer():
+    """A high-min_share player below their threshold is NOT subbed,
+    even at fatigue that would bench a low-min_share player."""
     hr = _roster(1, "Home")
     ar = _roster(2, "Away")
     ft = FatigueTracker(hr, ar)
     ls = _lineup_state(hr, ar)
-    star_pid = hr.players[0].player_id
-    ft._fatigue[star_pid] = 0.72
+    star_pid = hr.players[0].player_id  # threshold ~0.632
+    ft._fatigue[star_pid] = 0.50  # below star's threshold but above P4's
     subs = check_substitutions(ls, ft, quarter=1, side=Side.HOME)
     assert not any(s.off_player_id == star_pid for s in subs)
 
@@ -230,20 +233,24 @@ def test_sub_cooldown_prevents_immediate_reentry():
     tracker = FatigueTracker(hr, ar)
     tracker.start_cooldown(101)
     assert tracker.on_cooldown(101)
-    tracker.tick_cooldowns()
+    for _ in range(9):
+        tracker.tick_cooldowns()
     assert tracker.on_cooldown(101)
-    tracker.tick_cooldowns()  # 2nd tick
+    tracker.tick_cooldowns()  # 10th tick
     assert not tracker.on_cooldown(101)
 
 
 def test_star_cooldown_is_shorter():
-    """Stars get a 1-possession cooldown instead of 2."""
+    """Stars get an 8-possession cooldown instead of 10."""
     hr = _roster(1, "Home")
     ar = _roster(2, "Away")
     tracker = FatigueTracker(hr, ar)
     tracker.start_cooldown(101, is_star=True)
     assert tracker.on_cooldown(101)
-    tracker.tick_cooldowns()  # 1st tick
+    for _ in range(7):
+        tracker.tick_cooldowns()
+    assert tracker.on_cooldown(101)
+    tracker.tick_cooldowns()  # 8th tick
     assert not tracker.on_cooldown(101)
 
 
@@ -276,3 +283,19 @@ def test_cooldown_does_not_block_fouled_out():
     subs = check_substitutions(ls, tracker, quarter=1, side=Side.HOME)
     fouled_out_sub = [s for s in subs if s.off_player_id == pid]
     assert len(fouled_out_sub) == 1
+
+
+# ---------------------------------------------------------------------------
+# Per-player fatigue threshold tests
+# ---------------------------------------------------------------------------
+
+def test_player_fatigue_threshold_scales_with_min_share():
+    high_min = _player(1, "Starter", min_share=0.175)
+    low_min = _player(2, "Bench", min_share=0.05)
+    assert player_fatigue_threshold(high_min) > player_fatigue_threshold(low_min)
+
+
+def test_player_fatigue_threshold_none_uses_default():
+    no_data = _player(1, "Unknown", min_share=None)
+    default = _player(2, "Default", min_share=0.10)
+    assert abs(player_fatigue_threshold(no_data) - player_fatigue_threshold(default)) < 1e-10
