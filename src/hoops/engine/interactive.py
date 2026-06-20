@@ -685,7 +685,10 @@ class InteractiveGame:
         # CPU matchup-based subs.
         cpu_on_court = self.lineup.on_court(self.cpu_side)
         cpu_bench = self.lineup.bench(self.cpu_side)
-        matchup_subs = self.cpu_coach.should_matchup_sub(cpu_on_court, cpu_bench, self.fatigue)
+        matchup_subs = self.cpu_coach.should_matchup_sub(
+            cpu_on_court, cpu_bench, self.fatigue,
+            self.state.quarter, self.state.seconds_left,
+        )
         star_ids = self._home_stars if self.cpu_side is Side.HOME else self._away_stars
         for off_id, on_id in matchup_subs:
             result_events.append(self._apply_cpu_sub(off_id, on_id, star_ids))
@@ -701,6 +704,7 @@ class InteractiveGame:
         for side in (Side.HOME, Side.AWAY):
             sub_events_data = check_substitutions(
                 self.lineup, self.fatigue, self.state.quarter, side,
+                self.state.seconds_left,
             )
             if sub_events_data:
                 star_ids = self._home_stars if side is Side.HOME else self._away_stars
@@ -737,6 +741,7 @@ class InteractiveGame:
         """Run check_substitutions for the CPU side and apply them."""
         sub_events_data = check_substitutions(
             self.lineup, self.fatigue, self.state.quarter, self.cpu_side,
+            self.state.seconds_left,
         )
         if not sub_events_data:
             return []

@@ -12,7 +12,12 @@ from dataclasses import dataclass
 from enum import Enum
 
 from hoops.data.rosters import Player
-from hoops.engine.fatigue import FatigueTracker, foul_trouble_limit, player_importance
+from hoops.engine.fatigue import (
+    FatigueTracker,
+    foul_trouble_hold,
+    foul_trouble_limit,
+    player_importance,
+)
 from hoops.engine.policy import CoachPolicy, DefensiveScheme, OffensiveScheme
 from hoops.engine.scheme_affinity import detect_archetype
 from hoops.engine.state import Side
@@ -274,6 +279,8 @@ class CpuCoach:
         on_court: list[Player],
         bench: list[Player],
         fatigue_tracker: FatigueTracker | None = None,
+        quarter: int = 1,
+        seconds_left: int = 600,
     ) -> list[tuple[int, int]]:
         """Return (off_player_id, on_player_id) pairs for matchup-driven subs.
 
@@ -317,6 +324,7 @@ class CpuCoach:
                     if fatigue_tracker is not None and (
                         fatigue_tracker.on_cooldown(bp.player_id)
                         or fatigue_tracker.fouls(bp.player_id) >= 5
+                        or fatigue_tracker.on_foul_hold(bp.player_id, quarter, seconds_left)
                     ):
                         continue
                     candidate = bp
@@ -448,10 +456,14 @@ class CpuCoach:
         if not troubled or not bench:
             return []
 
-        # Sort bench by importance (best first), skip cooldown and fouled-out players.
+        # Sort bench by importance (best first), skip cooldown, fouled-out,
+        # and foul-held players.
         sorted_bench = sorted(
             [bp for bp in bench
-             if (fatigue_tracker is None or not fatigue_tracker.on_cooldown(bp.player_id))
+             if (fatigue_tracker is None or (
+                 not fatigue_tracker.on_cooldown(bp.player_id)
+                 and not fatigue_tracker.on_foul_hold(bp.player_id, quarter, seconds_left)
+             ))
              and fouls.get(bp.player_id, 0) < 5],
             key=player_importance, reverse=True,
         )
@@ -463,5 +475,9 @@ class CpuCoach:
                 break
             subs.append((p.player_id, sorted_bench[bench_idx].player_id))
             bench_idx += 1
+            if fatigue_tracker is not None and fouls.get(p.player_id, 0) < 5:
+                rank = rank_of[p.player_id]
+                hold_q, hold_s = foul_trouble_hold(quarter, seconds_left, rank)
+                fatigue_tracker.set_foul_hold(p.player_id, hold_q, hold_s)
 
         return subs

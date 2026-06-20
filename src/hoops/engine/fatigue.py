@@ -82,6 +82,7 @@ class FatigueTracker:
         self._fatigue: dict[int, float] = {}
         self._fouls: dict[int, int] = {}
         self._cooldown: dict[int, int] = {}
+        self._foul_hold: dict[int, tuple[int, int]] = {}
         for roster in (home_roster, away_roster):
             for p in roster.players:
                 self._fatigue[p.player_id] = 0.0
@@ -126,6 +127,26 @@ class FatigueTracker:
         """Return True if *player_id* is on substitution cooldown."""
         return player_id in self._cooldown
 
+    def set_foul_hold(self, player_id: int, until_quarter: int, until_seconds: int) -> None:
+        """Bench *player_id* for foul trouble until a specific game clock."""
+        self._foul_hold[player_id] = (until_quarter, until_seconds)
+
+    def on_foul_hold(self, player_id: int, quarter: int, seconds_left: int) -> bool:
+        """Return True if *player_id* is benched for foul trouble at this game clock."""
+        if player_id not in self._foul_hold:
+            return False
+        hold_q, hold_s = self._foul_hold[player_id]
+        if quarter < hold_q:
+            return True
+        if quarter == hold_q and seconds_left > hold_s:
+            return True
+        del self._foul_hold[player_id]
+        return False
+
+    def clear_foul_hold(self, player_id: int) -> None:
+        """Remove foul hold for *player_id*."""
+        self._foul_hold.pop(player_id, None)
+
 
 # ---------------------------------------------------------------------------
 # Substitution decision engine
@@ -134,13 +155,36 @@ class FatigueTracker:
 def foul_trouble_limit(quarter: int, rank: int) -> int:
     """Foul count at which a player should be pulled to protect them.
 
-    Single source of truth shared by the fatigue auto-sub engine and the
-    CPU coach: stars (importance rank 0-1) are protected at 3 fouls in
-    the first half, role players at 2; everyone at 4 in the second half.
+    First half: 2 fouls triggers a sub for everyone.
+    Q3: 4 fouls triggers a sub.
+    Q4: 4 fouls triggers a sub (shorter hold for stars).
     """
     if quarter <= 2:
-        return 3 if rank < 2 else _FOUL_TROUBLE_FIRST_HALF
+        return _FOUL_TROUBLE_FIRST_HALF
     return _FOUL_TROUBLE_SECOND_HALF
+
+
+def foul_trouble_hold(quarter: int, seconds_left: int, rank: int) -> tuple[int, int]:
+    """Return (hold_quarter, hold_seconds) — when the player can return.
+
+    First half (Q1-Q2): sit until Q3 starts (rest of the half).
+    Q3 with 4 fouls: sit until Q4 starts (rest of Q3), stars return
+      with 2 min left in Q3.
+    Q4 early (>5:00 left): stars sit ~2 min, role players ~3 min.
+    Q4 late (<=5:00 left): no hold — player returns at next dead ball.
+    """
+    if quarter <= 2:
+        if rank < 2:
+            return (3, 8 * 60)
+        return (3, 10 * 60)
+    if quarter == 3:
+        if rank < 2:
+            return (3, 2 * 60)
+        return (4, 10 * 60)
+    if seconds_left > 5 * 60:
+        hold_secs = seconds_left - (120 if rank < 2 else 180)
+        return (4, max(hold_secs, 0))
+    return (quarter, seconds_left)
 
 
 def player_fatigue_threshold(p: Player) -> float:
@@ -160,6 +204,7 @@ def check_substitutions(
     tracker: FatigueTracker,
     quarter: int,
     side: Side,
+    seconds_left: int = 600,
 ) -> list[SubEvent]:
     """Decide which players on *side* should be subbed out at a dead ball.
 
@@ -206,11 +251,13 @@ def check_substitutions(
             needs_sub.append((p, "fatigue"))
             continue
 
-    # Sort bench by importance (best available first), excluding cooldown and fouled-out players.
+    # Sort bench by importance (best available first), excluding cooldown, fouled-out,
+    # and foul-hold players.
     available_bench = sorted(
         [bp for bp in bench
          if not tracker.on_cooldown(bp.player_id)
-         and tracker.fouls(bp.player_id) < _FOULED_OUT],
+         and tracker.fouls(bp.player_id) < _FOULED_OUT
+         and not tracker.on_foul_hold(bp.player_id, quarter, seconds_left)],
         key=player_importance, reverse=True,
     )
 

@@ -444,9 +444,8 @@ def test_foul_trouble_first_half_role_player_2_fouls():
     assert subs[0][0] == 3
 
 
-def test_foul_trouble_first_half_star_2_fouls_no_sub():
-    """Unified rule: stars (importance rank < 2) stay in at 2 fouls in
-    the first half; they are only pulled at 3."""
+def test_foul_trouble_first_half_star_2_fouls_subbed():
+    """Stars with 2 fouls in the first half are now subbed out too."""
     coach = _make_coach()
     on_court = [_player(0, usage_pct=0.30, min_share=0.35)] + [
         _player(i, usage_pct=0.15, min_share=0.20) for i in range(1, 5)
@@ -455,7 +454,8 @@ def test_foul_trouble_first_half_star_2_fouls_no_sub():
     fouls = {i: 0 for i in range(11)}
     fouls[0] = 2
     subs = coach.should_foul_trouble_sub(on_court, bench, fouls, quarter=1, seconds_left=300)
-    assert len(subs) == 0
+    assert len(subs) == 1
+    assert subs[0][0] == 0
 
 
 def test_foul_trouble_empty_bench():

@@ -9,6 +9,7 @@ from hoops.engine.fatigue import (
     FatigueTracker,
     apply_fatigue,
     check_substitutions,
+    foul_trouble_hold,
     player_fatigue_threshold,
     player_importance,
 )
@@ -299,3 +300,74 @@ def test_player_fatigue_threshold_none_uses_default():
     no_data = _player(1, "Unknown", min_share=None)
     default = _player(2, "Default", min_share=0.10)
     assert abs(player_fatigue_threshold(no_data) - player_fatigue_threshold(default)) < 1e-10
+
+
+# ---------------------------------------------------------------------------
+# Foul hold tests
+# ---------------------------------------------------------------------------
+
+def test_foul_hold_blocks_bench_selection():
+    """A player on foul hold is not selected as a bench replacement."""
+    hr = _roster(1, "Home")
+    ar = _roster(2, "Away")
+    tracker = FatigueTracker(hr, ar)
+    ls = _lineup_state(hr, ar)
+    # Exhaust a starter
+    tracker._fatigue[hr.players[4].player_id] = 0.95
+    # Put best bench player on foul hold until Q3
+    tracker.set_foul_hold(hr.players[5].player_id, until_quarter=3, until_seconds=600)
+    subs = check_substitutions(ls, tracker, quarter=2, side=Side.HOME, seconds_left=300)
+    if subs:
+        assert subs[0].on_player_id != hr.players[5].player_id
+
+
+def test_foul_hold_expires():
+    """A foul hold expires when the game clock reaches the hold time."""
+    hr = _roster(1, "Home")
+    ar = _roster(2, "Away")
+    tracker = FatigueTracker(hr, ar)
+    tracker.set_foul_hold(hr.players[5].player_id, until_quarter=3, until_seconds=600)
+    assert tracker.on_foul_hold(hr.players[5].player_id, quarter=2, seconds_left=300)
+    assert not tracker.on_foul_hold(hr.players[5].player_id, quarter=3, seconds_left=500)
+
+
+def test_foul_trouble_hold_first_half_role_player():
+    """Role players with 2 fouls in Q1 sit until Q3."""
+    hold_q, hold_s = foul_trouble_hold(quarter=1, seconds_left=300, rank=3)
+    assert hold_q == 3
+    assert hold_s == 600
+
+
+def test_foul_trouble_hold_first_half_star():
+    """Stars with 2 fouls in the first half return with ~2 min left in Q2."""
+    hold_q, hold_s = foul_trouble_hold(quarter=2, seconds_left=400, rank=0)
+    assert hold_q == 3
+    assert hold_s == 480
+
+
+def test_foul_trouble_hold_q3_role_player():
+    """Role player with 4 fouls in Q3 sits until Q4."""
+    hold_q, hold_s = foul_trouble_hold(quarter=3, seconds_left=400, rank=3)
+    assert hold_q == 4
+    assert hold_s == 600
+
+
+def test_foul_trouble_hold_q3_star():
+    """Stars with 4 fouls in Q3 return with ~2 min left in Q3."""
+    hold_q, hold_s = foul_trouble_hold(quarter=3, seconds_left=400, rank=0)
+    assert hold_q == 3
+    assert hold_s == 120
+
+
+def test_foul_trouble_hold_q4_early():
+    """Early Q4 foul trouble: stars sit ~2 min, role players ~3 min."""
+    star_q, star_s = foul_trouble_hold(quarter=4, seconds_left=480, rank=0)
+    role_q, role_s = foul_trouble_hold(quarter=4, seconds_left=480, rank=3)
+    assert star_q == 4 and star_s == 360
+    assert role_q == 4 and role_s == 300
+
+
+def test_foul_trouble_hold_q4_late():
+    """Late Q4 foul trouble: no hold, player returns immediately."""
+    hold_q, hold_s = foul_trouble_hold(quarter=4, seconds_left=240, rank=3)
+    assert hold_q == 4 and hold_s == 240
