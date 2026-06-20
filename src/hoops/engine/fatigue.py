@@ -264,7 +264,7 @@ def check_substitutions(
     subs: list[SubEvent] = []
     used_bench_ids: set[int] = set()
 
-    for p, reason in needs_sub:
+    for p, _reason in needs_sub:
         # Find the best available bench player not yet assigned.
         replacement: Player | None = None
         for bp in available_bench:
@@ -275,7 +275,13 @@ def check_substitutions(
         if replacement is None:
             break  # No more bench players available.
 
-        subs.append(SubEvent(side=side, off_player_id=p.player_id, on_player_id=replacement.player_id))
+        subs.append(
+            SubEvent(
+                side=side,
+                off_player_id=p.player_id,
+                on_player_id=replacement.player_id,
+            )
+        )
         used_bench_ids.add(replacement.player_id)
 
     return subs
