@@ -442,7 +442,12 @@ class InteractiveGame:
         self._cpu_own_score_at_last_check = self.state.score_for(self.cpu_side)
 
     def substitute(self, side: Side, off_player_id: int, on_player_id: int) -> None:
-        """Substitute a player for the given side (works in any mode)."""
+        """Substitute a player for the given side (works in any mode).
+
+        Raises ValueError if *on_player_id* has fouled out (5 personal fouls).
+        """
+        if self.fatigue.fouls(on_player_id) >= 5:
+            raise ValueError("Cannot sub in a fouled-out player")
         self.lineup.substitute(side, off_player_id, on_player_id)
         star_ids = self._home_stars if side is Side.HOME else self._away_stars
         self.fatigue.start_cooldown(off_player_id, off_player_id in star_ids)
