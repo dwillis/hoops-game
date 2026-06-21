@@ -262,14 +262,21 @@ def simulate_possession(
         # treats this as the foul side-effect having "worked": defense
         # got the foul on the books, offense inbounds.
         if is_in_bonus(state, off_side):
+            last_made = False
             for _ in range(2):
-                made = rng.random() < _effective_ft_pct()
-                if made:
+                last_made = rng.random() < _effective_ft_pct()
+                if last_made:
                     state = state.add_score(off_side, 1)
                 events.append(Event(
                     quarter=state.quarter, seconds_left=state.seconds_left,
-                    type="free_throw_made" if made else "free_throw_missed",
+                    type="free_throw_made" if last_made else "free_throw_missed",
                     team=off_side, detail=foul_reason,
+                    home_score=state.home_score, away_score=state.away_score,
+                ))
+            if not last_made:
+                events.append(Event(
+                    quarter=state.quarter, seconds_left=state.seconds_left,
+                    type="rebound_def", team=off_side.other,
                     home_score=state.home_score, away_score=state.away_score,
                 ))
             state = state.end_possession(off_side).with_possession(off_side.other)
@@ -351,6 +358,12 @@ def simulate_possession(
                 home_score=state.home_score, away_score=state.away_score,
                 player=_shooter_name,
             ))
+            if not and1:
+                events.append(Event(
+                    quarter=state.quarter, seconds_left=state.seconds_left,
+                    type="rebound_def", team=off_side.other,
+                    home_score=state.home_score, away_score=state.away_score,
+                ))
         state = state.end_possession(off_side).with_possession(off_side.other)
         return state, events
 
@@ -364,16 +377,23 @@ def simulate_possession(
     if shot_foul:
         # Fouled on a missed shot: free throws (2 for 2pt, 3 for 3pt).
         n_fts = 3 if zone == "three" else 2
+        last_made = False
         for _ in range(n_fts):
-            r = rng.random() < _effective_ft_pct(_shooter)
-            if r:
+            last_made = rng.random() < _effective_ft_pct(_shooter)
+            if last_made:
                 state = state.add_score(off_side, 1)
             events.append(Event(
                 quarter=state.quarter, seconds_left=state.seconds_left,
-                type="free_throw_made" if r else "free_throw_missed",
+                type="free_throw_made" if last_made else "free_throw_missed",
                 team=off_side,
                 home_score=state.home_score, away_score=state.away_score,
                 player=_shooter_name,
+            ))
+        if not last_made:
+            events.append(Event(
+                quarter=state.quarter, seconds_left=state.seconds_left,
+                type="rebound_def", team=off_side.other,
+                home_score=state.home_score, away_score=state.away_score,
             ))
         state = state.end_possession(off_side).with_possession(off_side.other)
         return state, events
