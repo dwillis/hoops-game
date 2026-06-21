@@ -638,6 +638,17 @@ class InteractiveGame:
             opp_score=self.state.score_for(self.human_side),
         )
 
+        # Rotation subs (planned bench entries before reactive subs).
+        cpu_on_court_rot = self.lineup.on_court(self.cpu_side)
+        cpu_bench_rot = self.lineup.bench(self.cpu_side)
+        rotation_subs = self.cpu_coach.should_rotation_sub(
+            cpu_on_court_rot, cpu_bench_rot,
+            self.state.quarter, self.state.seconds_left, self.fatigue,
+        )
+        star_ids_rot = self._home_stars if self.cpu_side is Side.HOME else self._away_stars
+        for off_id, on_id in rotation_subs:
+            result_events.append(self._apply_cpu_sub(off_id, on_id, star_ids_rot))
+
         # Foul trouble subs (before matchup and fatigue subs).
         cpu_on_court_ft = self.lineup.on_court(self.cpu_side)
         cpu_bench_ft = self.lineup.bench(self.cpu_side)

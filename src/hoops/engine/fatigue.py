@@ -15,9 +15,9 @@ if TYPE_CHECKING:
 MAX_STAMINA: float = 2824.0
 
 # --- Substitution thresholds ------------------------------------------------
-_THRESHOLD_FRACTION = 0.85       # sub at 85% of expected playing-time fatigue
+_THRESHOLD_FRACTION = 0.95       # sub at 95% of expected playing-time fatigue
 _DEFAULT_MIN_SHARE = 0.10        # fallback for players with no min_share data
-_MIN_THRESHOLD = 0.15            # floor: everyone can play ~7 min before fatigue sub
+_MIN_THRESHOLD = 0.30            # floor: everyone can play ~14 min before fatigue sub
 _RECOVERY_MULTIPLIER = 2.0       # bench recovery is 2× accumulation rate
 _FOUL_TROUBLE_FIRST_HALF = 2    # Q1/Q2: 2+ fouls for non-stars
 _FOUL_TROUBLE_SECOND_HALF = 4   # Q3/Q4: 4+ fouls
@@ -83,10 +83,14 @@ class FatigueTracker:
         self._fouls: dict[int, int] = {}
         self._cooldown: dict[int, int] = {}
         self._foul_hold: dict[int, tuple[int, int]] = {}
+        self._total_seconds: dict[int, float] = {}
+        self._players: dict[int, Player] = {}
         for roster in (home_roster, away_roster):
             for p in roster.players:
                 self._fatigue[p.player_id] = 0.0
                 self._fouls[p.player_id] = 0
+                self._total_seconds[p.player_id] = 0.0
+                self._players[p.player_id] = p
 
     def fatigue(self, player_id: int) -> float:
         """Return current fatigue level for *player_id*."""
@@ -101,6 +105,7 @@ class FatigueTracker:
         increment = duration_seconds / MAX_STAMINA
         for pid in on_court_ids:
             self._fatigue[pid] += increment
+            self._total_seconds[pid] += duration_seconds
 
     def rest(self, bench_ids: list[int], duration_seconds: float) -> None:
         """Recover fatigue for benched players (2x recovery rate)."""
@@ -146,6 +151,28 @@ class FatigueTracker:
     def clear_foul_hold(self, player_id: int) -> None:
         """Remove foul hold for *player_id*."""
         self._foul_hold.pop(player_id, None)
+
+    def total_minutes(self, player_id: int) -> float:
+        """Return total on-court minutes for *player_id*."""
+        return self._total_seconds.get(player_id, 0.0) / 60.0
+
+    def over_target_minutes(self, player_id: int) -> bool:
+        """Return True if *player_id* has played more than their target minutes."""
+        p = self._players.get(player_id)
+        if p is None:
+            return False
+        ms = p.min_share if p.min_share is not None else _DEFAULT_MIN_SHARE
+        target = ms * 200.0
+        return self.total_minutes(player_id) >= target
+
+    def remaining_target_minutes(self, player_id: int) -> float:
+        """Return how many target minutes *player_id* has left."""
+        p = self._players.get(player_id)
+        if p is None:
+            return 0.0
+        ms = p.min_share if p.min_share is not None else _DEFAULT_MIN_SHARE
+        target = ms * 200.0
+        return max(0.0, target - self.total_minutes(player_id))
 
 
 # ---------------------------------------------------------------------------
@@ -251,29 +278,43 @@ def check_substitutions(
             needs_sub.append((p, "fatigue"))
             continue
 
-    # Sort bench by importance (best available first), excluding cooldown, fouled-out,
-    # and foul-hold players.
-    available_bench = sorted(
-        [bp for bp in bench
-         if not tracker.on_cooldown(bp.player_id)
-         and tracker.fouls(bp.player_id) < _FOULED_OUT
-         and not tracker.on_foul_hold(bp.player_id, quarter, seconds_left)],
-        key=player_importance, reverse=True,
+        # Over-target check — pull players who've exceeded their planned minutes.
+        if tracker.over_target_minutes(pid):
+            needs_sub.append((p, "fatigue"))
+            continue
+
+    # Build two bench pools: under-target (preferred) and all eligible (fallback
+    # for fouled-out subs only).
+    eligible_bench = [
+        bp for bp in bench
+        if not tracker.on_cooldown(bp.player_id)
+        and tracker.fouls(bp.player_id) < _FOULED_OUT
+        and not tracker.on_foul_hold(bp.player_id, quarter, seconds_left)
+    ]
+    under_target_bench = sorted(
+        [bp for bp in eligible_bench if not tracker.over_target_minutes(bp.player_id)],
+        key=lambda bp: tracker.remaining_target_minutes(bp.player_id),
+        reverse=True,
     )
+    all_bench = sorted(eligible_bench, key=player_importance, reverse=True)
 
     subs: list[SubEvent] = []
     used_bench_ids: set[int] = set()
 
-    for p, _reason in needs_sub:
-        # Find the best available bench player not yet assigned.
+    for p, reason in needs_sub:
+        # For fatigue/foul-trouble, only use under-target bench players.
+        # For fouled-out, use anyone available.
+        pool = all_bench if reason == "fouled_out" else under_target_bench
         replacement: Player | None = None
-        for bp in available_bench:
+        for bp in pool:
             if bp.player_id not in used_bench_ids:
                 replacement = bp
                 break
 
         if replacement is None:
-            break  # No more bench players available.
+            if reason == "fouled_out":
+                break
+            continue
 
         subs.append(
             SubEvent(

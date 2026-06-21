@@ -68,7 +68,7 @@ class Player:
     def mpg(self, team_games: int = 0) -> float:
         """Minutes per game, diluted by team games for part-time players."""
         gp = max(self.games_played, 1)
-        if team_games > 0 and self.games_played < team_games / 2:
+        if team_games > 0 and self.games_played < team_games * 3 / 4:
             gp = team_games
         return self.minutes / gp
 

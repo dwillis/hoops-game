@@ -317,7 +317,8 @@ class CpuCoach:
         used_court: set[int] = set()
 
         for needed_archetype in needs:
-            # Find best bench player with the needed archetype (skip cooldown).
+            # Find best bench player with the needed archetype (skip cooldown,
+            # over-target-minutes).
             candidate = None
             for bp, arch in bench_archetypes:
                 if arch == needed_archetype and bp.player_id not in used_bench:
@@ -325,6 +326,7 @@ class CpuCoach:
                         fatigue_tracker.on_cooldown(bp.player_id)
                         or fatigue_tracker.fouls(bp.player_id) >= 5
                         or fatigue_tracker.on_foul_hold(bp.player_id, quarter, seconds_left)
+                        or fatigue_tracker.over_target_minutes(bp.player_id)
                     ):
                         continue
                     candidate = bp
@@ -347,6 +349,75 @@ class CpuCoach:
             used_court.add(pull.player_id)
 
         return subs
+
+    def should_rotation_sub(
+        self,
+        on_court: list[Player],
+        bench: list[Player],
+        quarter: int,
+        seconds_left: int,
+        fatigue_tracker: FatigueTracker | None = None,
+    ) -> list[tuple[int, int]]:
+        """Return (off_id, on_id) pairs for planned rotation subs.
+
+        Bench players who haven't played yet should enter the game
+        based on their min_share (expected minutes):
+        - 15+ min players: enter by ~4 min into Q1
+        - 10-14 min players: enter by ~6 min into Q1
+        - 6-9 min players: enter by end of Q1
+        - 3-5 min players: enter by mid Q2
+        At most one rotation sub per dead ball.
+        """
+        if not bench or fatigue_tracker is None:
+            return []
+
+        game_minutes = (quarter - 1) * 10 + (10 * 60 - seconds_left) / 60
+
+        overdue: list[Player] = []
+        for bp in bench:
+            if fatigue_tracker.fatigue(bp.player_id) > 0:
+                continue
+            if fatigue_tracker.on_cooldown(bp.player_id):
+                continue
+            if fatigue_tracker.fouls(bp.player_id) >= 5:
+                continue
+            if fatigue_tracker.on_foul_hold(bp.player_id, quarter, seconds_left):
+                continue
+            if fatigue_tracker.over_target_minutes(bp.player_id):
+                continue
+            ms = bp.min_share if bp.min_share is not None else 0.0
+            target_min = ms * 200.0
+            if target_min >= 15:
+                deadline = 4.0
+            elif target_min >= 10:
+                deadline = 6.0
+            elif target_min >= 6:
+                deadline = 10.0
+            elif target_min >= 3:
+                deadline = 15.0
+            else:
+                continue
+            if game_minutes >= deadline:
+                overdue.append(bp)
+
+        if not overdue:
+            return []
+
+        overdue.sort(key=player_importance, reverse=True)
+        candidate = overdue[0]
+
+        pullable = sorted(
+            [p for p in on_court
+             if fatigue_tracker is None or (
+                 not fatigue_tracker.on_cooldown(p.player_id)
+                 and not fatigue_tracker.on_foul_hold(p.player_id, quarter, seconds_left)
+             )],
+            key=player_importance,
+        )
+        if not pullable:
+            return []
+
+        return [(pullable[0].player_id, candidate.player_id)]
 
     def should_veto_fatigue_sub(self, player_name: str, fatigue: float, threshold: float) -> bool:
         """Return True if a hot hand should override a fatigue-triggered sub.
@@ -456,17 +527,27 @@ class CpuCoach:
         if not troubled or not bench:
             return []
 
-        # Sort bench by importance (best first), skip cooldown, fouled-out,
-        # and foul-held players.
-        sorted_bench = sorted(
-            [bp for bp in bench
-             if (fatigue_tracker is None or (
-                 not fatigue_tracker.on_cooldown(bp.player_id)
-                 and not fatigue_tracker.on_foul_hold(bp.player_id, quarter, seconds_left)
-             ))
-             and fouls.get(bp.player_id, 0) < 5],
-            key=player_importance, reverse=True,
-        )
+        # Sort bench by remaining target minutes, skip cooldown, fouled-out,
+        # and foul-held players.  Exclude over-target players unless none
+        # are under target.
+        eligible = [
+            bp for bp in bench
+            if (fatigue_tracker is None or (
+                not fatigue_tracker.on_cooldown(bp.player_id)
+                and not fatigue_tracker.on_foul_hold(bp.player_id, quarter, seconds_left)
+            ))
+            and fouls.get(bp.player_id, 0) < 5
+        ]
+        if fatigue_tracker is not None:
+            under_target = [bp for bp in eligible if not fatigue_tracker.over_target_minutes(bp.player_id)]
+            pool = under_target if under_target else eligible
+            sorted_bench = sorted(
+                pool,
+                key=lambda bp: fatigue_tracker.remaining_target_minutes(bp.player_id),
+                reverse=True,
+            )
+        else:
+            sorted_bench = sorted(eligible, key=player_importance, reverse=True)
 
         subs: list[tuple[int, int]] = []
         bench_idx = 0
