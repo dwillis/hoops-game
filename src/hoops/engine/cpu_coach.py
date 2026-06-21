@@ -539,7 +539,10 @@ class CpuCoach:
             and fouls.get(bp.player_id, 0) < 5
         ]
         if fatigue_tracker is not None:
-            under_target = [bp for bp in eligible if not fatigue_tracker.over_target_minutes(bp.player_id)]
+            under_target = [
+                bp for bp in eligible
+                if not fatigue_tracker.over_target_minutes(bp.player_id)
+            ]
             pool = under_target if under_target else eligible
             sorted_bench = sorted(
                 pool,
