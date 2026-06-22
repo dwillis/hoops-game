@@ -180,6 +180,10 @@ class BoxScorePanel(Static):
         self._view_mode = (self._view_mode + 1) % max_modes
         self.refresh_view()
 
+    def show_team_view(self) -> None:
+        self._view_mode = 0
+        self.refresh_view()
+
     def _set(self, text: str) -> None:
         self.last_text = text
         self.update(text)

@@ -44,6 +44,7 @@ class GameScreen(Screen):
         Binding("f", "run_to_end", "Run to end"),
         Binding("b", "open_subs", "Subs"),
         Binding("x", "toggle_box_detail", "Box detail"),
+        Binding("g", "show_team_stats", "Team stats"),
         Binding("plus,equals", "speed_up", "+Speed", show=False),
         Binding("minus,underscore", "speed_down", "-Speed", show=False),
         Binding("escape", "back", "Back"),
@@ -215,6 +216,9 @@ class GameScreen(Screen):
 
     def action_toggle_box_detail(self) -> None:
         self.box.toggle_detail()
+
+    def action_show_team_stats(self) -> None:
+        self.box.show_team_view()
 
     # --- rendering --------------------------------------------------------
 
@@ -670,20 +674,12 @@ class StartingLineupScreen(Screen):
     def _roster_text(self) -> str:
         # Per-game stats table with selection markers.
         header = (
-            "     KEY  PLAYER               POS   GP   MPG   PPG   RPG   APG  "
+            "     PLAYER               POS   GP   MPG   PPG   RPG   APG  "
             "FG%   3P%   FT%"
         )
         sep = "     " + "─" * (len(header) - 5)
         rows = [header, sep]
         for i, p in enumerate(self._roster.players):
-            if i < 9:
-                key_label = str(i + 1)  # 1-9
-            elif i == 9:
-                key_label = "0"         # 0 = player 10
-            elif i < 15:
-                key_label = "abcde"[i - 10]
-            else:
-                key_label = " "
             marker = " ★ " if i in self._selected else "   "
             team_gp = self._roster.team_games
             gp = max(p.games_played, 1)
@@ -697,7 +693,7 @@ class StartingLineupScreen(Screen):
             pos = p.position or "—"
             name = p.name[:20]
             rows.append(
-                f"{marker}  {key_label}   {name:<20s} {pos:<4s} {gp:3d}  "
+                f"{marker} {name:<20s} {pos:<4s} {gp:3d}  "
                 f"{mpg:4.1f}  {ppg:5.1f} {rpg:5.1f} {apg:5.1f}  "
                 f"{fg_pct:4.1f}  {fg3_pct:4.1f}  {ft_pct:4.1f}"
             )
@@ -743,6 +739,7 @@ class CoachGameScreen(Screen):
         Binding("s", "save_game", "Save"),
         Binding("l", "load_game", "Load"),
         Binding("x", "toggle_box_detail", "Box detail"),
+        Binding("g", "show_team_stats", "Team stats"),
         Binding("f", "run_to_end", "Sim to end"),
         Binding("plus,equals", "speed_up", "+Speed", show=False),
         Binding("minus,underscore", "speed_down", "-Speed", show=False),
@@ -1122,6 +1119,9 @@ class CoachGameScreen(Screen):
 
     def action_toggle_box_detail(self) -> None:
         self.box.toggle_detail()
+
+    def action_show_team_stats(self) -> None:
+        self.box.show_team_view()
 
     def action_back(self) -> None:
         if self.game.is_game_over:
