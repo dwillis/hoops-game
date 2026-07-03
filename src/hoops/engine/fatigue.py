@@ -17,7 +17,9 @@ MAX_STAMINA: float = 2824.0
 # --- Substitution thresholds ------------------------------------------------
 _THRESHOLD_FRACTION = 0.95       # sub at 95% of expected playing-time fatigue
 _DEFAULT_MIN_SHARE = 0.10        # fallback for players with no min_share data
-_MIN_THRESHOLD = 0.30            # floor: everyone can play ~14 min before fatigue sub
+_MIN_THRESHOLD = 0.30            # cap on the role-scaled floor below (~14 min)
+_FLOOR_MULTIPLIER = 1.5          # floor = 1.5x a player's normal-workload fatigue
+_ABS_MIN_THRESHOLD = 0.12        # absolute floor so nobody flags after a few min
 _RECOVERY_MULTIPLIER = 2.0       # bench recovery is 2× accumulation rate
 _FOUL_TROUBLE_FIRST_HALF = 2    # Q1/Q2: 2+ fouls for non-stars
 _FOUL_TROUBLE_SECOND_HALF = 4   # Q3/Q4: 4+ fouls
@@ -95,6 +97,17 @@ class FatigueTracker:
     def fatigue(self, player_id: int) -> float:
         """Return current fatigue level for *player_id*."""
         return self._fatigue[player_id]
+
+    def fatigue_ratio(self, player_id: int) -> float:
+        """Return fatigue as a fraction of *player_id*'s personal sub-out
+        threshold (see ``player_fatigue_threshold``). 1.0 means they've hit
+        the point the engine would sub them out; stars reach 1.0 later
+        than role players at the same raw fatigue level."""
+        p = self._players.get(player_id)
+        if p is None:
+            return 0.0
+        threshold = player_fatigue_threshold(p)
+        return self._fatigue[player_id] / threshold if threshold > 0 else 0.0
 
     def fouls(self, player_id: int) -> int:
         """Return current foul count for *player_id*."""
@@ -218,12 +231,22 @@ def player_fatigue_threshold(p: Player) -> float:
     """Return the fatigue level at which *p* should be subbed out.
 
     Derived from the player's historical minutes share so high-minutes
-    players have higher thresholds and get subbed later.
+    players have higher thresholds and get subbed later. A safety-net
+    floor keeps low-minutes players from being subbed almost immediately
+    if thrust into extended duty, but the floor itself scales down with
+    the player's normal workload (capped at ``_MIN_THRESHOLD``) rather
+    than being one flat value shared by every role — otherwise a bench
+    player who rarely plays needs the same ~14 continuous minutes as a
+    starter to ever register as fatigued.
     """
     ms = p.min_share if p.min_share is not None else _DEFAULT_MIN_SHARE
     target_minutes = ms * 200.0  # 5 slots × 40 min
     target_fatigue = target_minutes * 60 / MAX_STAMINA
-    return max(_MIN_THRESHOLD, target_fatigue * _THRESHOLD_FRACTION)
+    scaled_threshold = target_fatigue * _THRESHOLD_FRACTION
+    role_floor = max(
+        _ABS_MIN_THRESHOLD, min(_MIN_THRESHOLD, target_fatigue * _FLOOR_MULTIPLIER)
+    )
+    return max(scaled_threshold, role_floor)
 
 
 def check_substitutions(
