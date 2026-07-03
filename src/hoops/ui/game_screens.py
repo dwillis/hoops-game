@@ -1254,8 +1254,15 @@ class CoachSubScreen(Screen):
         rows = ["On court:", ""]
         for idx, p in enumerate(on_court):
             marker = " *" if self._pull_idx == idx else "  "
-            fatigue = self.game.fatigue.fatigue(p.player_id)
-            fatigue_bar = "!" if fatigue > 0.7 else ""
+            # Fatigue relative to this player's own (star-aware) sub-out
+            # threshold, not a flat cutoff.
+            ratio = self.game.fatigue.fatigue_ratio(p.player_id)
+            if ratio >= 1.0:
+                fatigue_bar = "[blink bold red]*** GASSED ***[/]"
+            elif ratio >= 0.85:
+                fatigue_bar = "[yellow]* TIRED[/]"
+            else:
+                fatigue_bar = ""
             fouls = self.game.fatigue.fouls(p.player_id)
             mpg = p.mpg(team_gp)
             rows.append(f"{marker}{idx + 1}. {p.name}  ({mpg:.1f} mpg)  F:{fouls}  {fatigue_bar}")

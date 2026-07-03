@@ -70,13 +70,18 @@ def _attribute_possession(
                     fatigue.add_foul(p.player_id)
                     break
 
-        out.append(e)
-
+        assister_name = None
         if e.type == "shot_made" and e.team is not None:
             if rng.random() < _ASSIST_PROB:
                 adhoc = lineup._adhoc(e.team)
                 assister = adhoc.assister(rng, exclude=e.player)
-                out.append(_credit_event(e, "assist", e.team, assister.name))
+                assister_name = assister.name
+                e = dataclasses.replace(e, assist_by=assister_name)
+
+        out.append(e)
+
+        if assister_name is not None:
+            out.append(_credit_event(e, "assist", e.team, assister_name))
 
         if e.type == "shot_missed" and e.team is not None:
             fouled = next_e is not None and next_e.type == "foul_shooting"

@@ -95,10 +95,15 @@ def attribute_players(
                 )
                 shooter_name = shooter.name
             pending_ft_shooter[attacker_side] = shooter_name
-            out.append(dataclasses.replace(e, player=shooter_name))
+            assister_name = None
             if rng.random() < _ASSIST_PROB:
                 assister = attacker_roster.assister(rng, exclude=shooter_name)
-                out.append(_credit_event(e, "assist", attacker_side, assister.name))
+                assister_name = assister.name
+            out.append(dataclasses.replace(
+                e, player=shooter_name, assist_by=assister_name,
+            ))
+            if assister_name is not None:
+                out.append(_credit_event(e, "assist", attacker_side, assister_name))
             continue
 
         if e.type == "shot_missed":

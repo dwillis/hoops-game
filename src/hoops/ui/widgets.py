@@ -130,6 +130,9 @@ class PossessionLog(RichLog):
     _SCORING = {"shot_made", "free_throw_made"}
 
     def append_event(self, e: Event) -> None:
+        if e.type == "assist":
+            # Rendered inline on the preceding shot_made line instead.
+            return
         line = fmt_event(e, self.home_short, self.away_short)
         if e.type in self._SCORING:
             line = f"[bold]{line}[/bold]"
@@ -248,17 +251,19 @@ class BoxScorePanel(Static):
             return {}
         roster = self._lineup.roster(side)
         return {
-            p.name: self._fatigue.fatigue(p.player_id)
+            p.name: self._fatigue.fatigue_ratio(p.player_id)
             for p in roster.players
             if p.player_id in self._fatigue._fatigue
         }
 
     @staticmethod
-    def _fatigue_tag(level: float) -> str:
-        if level >= 0.7:
-            return " GASSED"
-        if level >= 0.5:
-            return " TIRED"
+    def _fatigue_tag(ratio: float) -> str:
+        # ratio is fatigue relative to this player's own sub-out threshold
+        # (star-aware), not a flat cutoff — 1.0 means "should be subbed."
+        if ratio >= 1.0:
+            return " [blink bold red]*** GASSED ***[/]"
+        if ratio >= 0.85:
+            return " [yellow]* TIRED[/]"
         return ""
 
     def _render_player_view(self) -> None:

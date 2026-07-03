@@ -47,6 +47,10 @@ class Event:
     """Plain-text player name attached by the post-sim attribution pass.
     The engine itself emits events without players; ``attribute_players``
     fills this in by sampling roster weights."""
+    assist_by: str | None = None
+    """Name of the assisting player, set on a ``shot_made`` event so the
+    play-by-play line can render "made layup (Name assist)" on one line.
+    The standalone ``assist`` event is still emitted for box-score totals."""
 
 
 def fmt_clock(seconds_left: int) -> str:
@@ -81,7 +85,8 @@ def _phrase(e: Event, team_label: str = "") -> str:
         return "Tip-off"
     if e.type == "shot_made":
         shot = _SHOT_LABEL.get(e.detail, "shot")
-        return f"{actor} made {shot}".strip()
+        assist = f" ({e.assist_by} assist)" if e.assist_by else ""
+        return f"{actor} made {shot}{assist}".strip()
     if e.type == "shot_missed":
         shot = _SHOT_LABEL.get(e.detail, "shot")
         return f"{actor} missed {shot}".strip()
