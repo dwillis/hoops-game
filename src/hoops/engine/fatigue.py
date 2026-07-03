@@ -48,7 +48,8 @@ def player_importance(p: Player) -> float:
 
 
 def apply_fatigue(player: Player, fatigue: float) -> Player:
-    """Return a copy of *player* with shooting rates degraded by *fatigue*.
+    """Return a copy of *player* with shooting and hustle rates degraded
+    by *fatigue*.
 
     *fatigue* is expected on the same scale as ``FatigueTracker.
     effective_fatigue`` / ``display_fatigue_ratio``: 0 = fresh, 1.0 = at
@@ -59,8 +60,11 @@ def apply_fatigue(player: Player, fatigue: float) -> Player:
     pushed past their threshold rather than degrading gently throughout,
     floored so even a very overworked player isn't reduced to nothing.
 
-    * ``ts_pct`` and ``ft_pct`` are multiplied by effectiveness (degraded).
-    * ``tov_pct`` is divided by effectiveness (increased), capped at 0.50.
+    * ``ts_pct``, ``ft_pct``, ``orb_pct``, ``drb_pct``, ``stl_pct``, and
+      ``blk_pct`` are multiplied by effectiveness (degraded) — tired
+      legs mean worse shooting *and* worse hustle/rebounding/closeouts.
+    * ``tov_pct`` and ``foul_rate`` are divided by effectiveness
+      (increased), ``tov_pct`` capped at 0.50.
     * All other fields are unchanged.
     * If a rate is ``None``, it stays ``None``.
     """
@@ -71,15 +75,20 @@ def apply_fatigue(player: Player, fatigue: float) -> Player:
 
     replacements: dict[str, float | None] = {}
 
-    # Degrade shooting rates
-    if player.ts_pct is not None:
-        replacements["ts_pct"] = player.ts_pct * effectiveness
-    if player.ft_pct is not None:
-        replacements["ft_pct"] = player.ft_pct * effectiveness
+    # Degrade shooting and hustle/activity rates.
+    for attr in ("ts_pct", "ft_pct", "orb_pct", "drb_pct", "stl_pct", "blk_pct"):
+        val = getattr(player, attr)
+        if val is not None:
+            replacements[attr] = val * effectiveness
 
-    # Increase turnover rate (inverse)
+    # Increase turnover rate (inverse), capped as a percentage.
     if player.tov_pct is not None:
         replacements["tov_pct"] = min(player.tov_pct / effectiveness, 0.50)
+
+    # Slower closeouts and rotations mean more fouls (inverse, uncapped —
+    # foul_rate isn't a percentage and effectiveness is already floored).
+    if player.foul_rate is not None:
+        replacements["foul_rate"] = player.foul_rate / effectiveness
 
     return dataclasses.replace(player, **replacements)
 

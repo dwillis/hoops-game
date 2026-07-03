@@ -117,11 +117,24 @@ def test_apply_fatigue_zero_is_identity():
     assert adjusted.tov_pct == p.tov_pct
 
 
-def test_apply_fatigue_preserves_non_affected_fields():
-    p = _player(1, "Tired", orb_pct=3.0, drb_pct=8.0)
+def test_apply_fatigue_degrades_rebound_and_hustle_rates():
+    p = _player(1, "Tired", orb_pct=3.0, drb_pct=8.0, stl_pct=2.5, blk_pct=0.8)
     adjusted = apply_fatigue(p, fatigue=0.8)
-    assert adjusted.orb_pct == p.orb_pct
-    assert adjusted.drb_pct == p.drb_pct
+    assert adjusted.orb_pct < p.orb_pct
+    assert adjusted.drb_pct < p.drb_pct
+    assert adjusted.stl_pct < p.stl_pct
+    assert adjusted.blk_pct < p.blk_pct
+
+
+def test_apply_fatigue_increases_foul_rate():
+    p = _player(1, "Tired", foul_rate=3.0)
+    adjusted = apply_fatigue(p, fatigue=0.8)
+    assert adjusted.foul_rate > p.foul_rate
+
+
+def test_apply_fatigue_preserves_identity_fields():
+    p = _player(1, "Tired")
+    adjusted = apply_fatigue(p, fatigue=0.8)
     assert adjusted.name == p.name
     assert adjusted.player_id == p.player_id
 

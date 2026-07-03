@@ -86,12 +86,6 @@ def compute_lineup_rates(
     LineupRates
         Frozen dataclass with blended rates and shooter tuples.
     """
-    if fatigue_tracker is not None:
-        on_court = [
-            apply_fatigue(p, fatigue_tracker.effective_fatigue(p.player_id))
-            for p in on_court
-        ]
-
     if scheme is not None:
         affinity_mult = [scheme_affinity(p).get(scheme, 1.0) for p in on_court]
     else:
@@ -123,6 +117,16 @@ def compute_lineup_rates(
             replacements["ts_pct"] = shrink_rate(p.ts_pct, _team_ts, p.minutes)
         shrunk_players.append(dataclasses.replace(p, **replacements))
     on_court = shrunk_players
+
+    # Apply fatigue AFTER shrinkage, not before — otherwise the shrinkage
+    # pass blends a fatigued rate back toward the (undegraded) team prior,
+    # diluting the fatigue effect most for exactly the low-minutes bench
+    # players it should matter most for.
+    if fatigue_tracker is not None:
+        on_court = [
+            apply_fatigue(p, fatigue_tracker.effective_fatigue(p.player_id))
+            for p in on_court
+        ]
 
     # 1. Collect raw usage weights (default 0.20 if missing).
     raw_weights = [max(0.0, p.usage_pct if p.usage_pct is not None else 0.20) for p in on_court]
