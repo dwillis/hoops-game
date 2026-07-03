@@ -50,7 +50,14 @@ def player_importance(p: Player) -> float:
 def apply_fatigue(player: Player, fatigue: float) -> Player:
     """Return a copy of *player* with shooting rates degraded by *fatigue*.
 
-    Multiplier curve: ``effectiveness = 1.0 - 0.15 * fatigue**2``.
+    *fatigue* is expected on the same scale as ``FatigueTracker.
+    effective_fatigue`` / ``display_fatigue_ratio``: 0 = fresh, 1.0 = at
+    the player's personal sub-out threshold (roughly the TIRED/GASSED
+    boundary), and beyond 1.0 for a player who's stayed in past that
+    point. Multiplier curve: ``effectiveness = max(0.40, 1.0 - 0.10 *
+    fatigue**3)`` — cubic so the falloff accelerates once a player is
+    pushed past their threshold rather than degrading gently throughout,
+    floored so even a very overworked player isn't reduced to nothing.
 
     * ``ts_pct`` and ``ft_pct`` are multiplied by effectiveness (degraded).
     * ``tov_pct`` is divided by effectiveness (increased), capped at 0.50.
@@ -60,7 +67,7 @@ def apply_fatigue(player: Player, fatigue: float) -> Player:
     if fatigue <= 0.0:
         return player
 
-    effectiveness = 1.0 - 0.15 * fatigue ** 2
+    effectiveness = max(0.40, 1.0 - 0.10 * fatigue ** 3)
 
     replacements: dict[str, float | None] = {}
 
@@ -131,6 +138,14 @@ class FatigueTracker:
         (``minutes_ratio``), so rest between stints can't mask a player
         who has played well past their normal workload for the game."""
         return max(self.fatigue_ratio(player_id), self.minutes_ratio(player_id))
+
+    def effective_fatigue(self, player_id: int) -> float:
+        """Return the fatigue value that should feed performance
+        degradation (``apply_fatigue``) — an alias for
+        ``display_fatigue_ratio``, so a player tagged TIRED/GASSED in the
+        UI actually plays worse by the same measure, even if a recent
+        bench rest has brought their raw live fatigue back down."""
+        return self.display_fatigue_ratio(player_id)
 
     def fouls(self, player_id: int) -> int:
         """Return current foul count for *player_id*."""

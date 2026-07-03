@@ -88,7 +88,7 @@ def compute_lineup_rates(
     """
     if fatigue_tracker is not None:
         on_court = [
-            apply_fatigue(p, fatigue_tracker.fatigue(p.player_id))
+            apply_fatigue(p, fatigue_tracker.effective_fatigue(p.player_id))
             for p in on_court
         ]
 
