@@ -325,13 +325,9 @@ def simulate_possession(
     shot_foul = rng.random() < _shot_foul_prob(off, zone)
     if shot_foul:
         # Shooting foul accrues to the defense's per-quarter team fouls.
+        # The log entry itself is appended after the shot result below,
+        # so play-by-play reads shot attempt -> foul -> free throws.
         state = state.add_team_foul(off_side.other)
-        events.append(Event(
-            quarter=state.quarter, seconds_left=state.seconds_left,
-            type="foul_shooting", team=off_side.other,
-            detail=f"on shot ({zone}); team_fouls_q={state.fouls_for(off_side.other)}",
-            home_score=state.home_score, away_score=state.away_score,
-        ))
     if off_lineup_rates is not None and _shooter is not None:
         made = rng.random() < player_zone_make_prob(_shooter, zone, off)
     else:
@@ -348,6 +344,12 @@ def simulate_possession(
             player=_shooter_name,
         ))
         if shot_foul:
+            events.append(Event(
+                quarter=state.quarter, seconds_left=state.seconds_left,
+                type="foul_shooting", team=off_side.other,
+                detail=f"on shot ({zone}); team_fouls_q={state.fouls_for(off_side.other)}",
+                home_score=state.home_score, away_score=state.away_score,
+            ))
             and1 = rng.random() < _effective_ft_pct(_shooter)
             if and1:
                 state = state.add_score(off_side, 1)
@@ -375,6 +377,12 @@ def simulate_possession(
         player=_shooter_name,
     ))
     if shot_foul:
+        events.append(Event(
+            quarter=state.quarter, seconds_left=state.seconds_left,
+            type="foul_shooting", team=off_side.other,
+            detail=f"on shot ({zone}); team_fouls_q={state.fouls_for(off_side.other)}",
+            home_score=state.home_score, away_score=state.away_score,
+        ))
         # Fouled on a missed shot: free throws (2 for 2pt, 3 for 3pt).
         n_fts = 3 if zone == "three" else 2
         last_made = False

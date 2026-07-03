@@ -212,19 +212,19 @@ def test_media_timeout_fires_under_five_minutes():
 
 
 def test_cpu_calls_timeout_on_scoring_run():
-    """The CPU should call at least one timeout during a full game."""
+    """The CPU should call a timeout once the human opponent goes on an
+    8+ point unanswered run. Drives the state directly rather than relying
+    on a full random simulation happening to produce a qualifying run."""
+    import dataclasses
+
     game = _make_game(seed=2, human_side=Side.HOME)
-    cpu_timeouts = []
-    for _ in range(500):
-        if game.is_game_over:
-            break
-        result = game.step_possession()
-        for e in result.events:
-            if e.type == "timeout" and e.team is game.cpu_side:
-                cpu_timeouts.append(e)
-    # Over a full game the CPU should call at least one timeout.
-    assert len(cpu_timeouts) >= 1
-    # CPU timeouts should decrement CPU's count.
+    game.state = dataclasses.replace(game.state, home_score=8, away_score=0)
+
+    game._process_cpu_coaching()
+
+    assert any(
+        e.type == "timeout" and e.team is game.cpu_side for e in game.all_events
+    )
     assert game.cpu_policy().timeouts_remaining < 4
 
 

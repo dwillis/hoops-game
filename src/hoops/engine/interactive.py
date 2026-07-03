@@ -600,6 +600,7 @@ class InteractiveGame:
         self.lineup.substitute(self.cpu_side, off_id, on_id)
         self.fatigue.start_cooldown(off_id, off_id in star_ids)
         self.fatigue.start_cooldown(on_id, on_id in star_ids)
+        self._recompute_lineup_rates()
         ev = Event(
             quarter=self.state.quarter,
             seconds_left=self.state.seconds_left,
