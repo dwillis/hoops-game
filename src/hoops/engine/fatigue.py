@@ -18,8 +18,8 @@ MAX_STAMINA: float = 2824.0
 _THRESHOLD_FRACTION = 0.95       # sub at 95% of expected playing-time fatigue
 _DEFAULT_MIN_SHARE = 0.10        # fallback for players with no min_share data
 _MIN_THRESHOLD = 0.30            # cap on the role-scaled floor below (~14 min)
-_FLOOR_MULTIPLIER = 1.5          # floor = 1.5x a player's normal-workload fatigue
 _ABS_MIN_THRESHOLD = 0.12        # absolute floor so nobody flags after a few min
+_MINUTES_OVERAGE_ALLOWANCE = 1.05  # total minutes may run 5% over normal before flagging
 _RECOVERY_MULTIPLIER = 2.0       # bench recovery is 2× accumulation rate
 _FOUL_TROUBLE_FIRST_HALF = 2    # Q1/Q2: 2+ fouls for non-stars
 _FOUL_TROUBLE_SECOND_HALF = 4   # Q3/Q4: 4+ fouls
@@ -108,6 +108,29 @@ class FatigueTracker:
             return 0.0
         threshold = player_fatigue_threshold(p)
         return self._fatigue[player_id] / threshold if threshold > 0 else 0.0
+
+    def minutes_ratio(self, player_id: int) -> float:
+        """Return total minutes played this game as a fraction of
+        *player_id*'s normal-workload minutes, allowing a small overage
+        before reaching 1.0. Unlike ``fatigue_ratio``, this doesn't drop
+        when the player rests — a player who racks up big total minutes
+        via a well-rested rotation still reads as fatigued here, even if
+        their *live* fatigue has recovered between stints."""
+        p = self._players.get(player_id)
+        if p is None:
+            return 0.0
+        ms = p.min_share if p.min_share is not None else _DEFAULT_MIN_SHARE
+        target = ms * 200.0
+        if target <= 0:
+            return 0.0
+        return self.total_minutes(player_id) / (target * _MINUTES_OVERAGE_ALLOWANCE)
+
+    def display_fatigue_ratio(self, player_id: int) -> float:
+        """Combined ratio used for UI fatigue indicators: the worse of
+        live fatigue (``fatigue_ratio``) and cumulative overplay
+        (``minutes_ratio``), so rest between stints can't mask a player
+        who has played well past their normal workload for the game."""
+        return max(self.fatigue_ratio(player_id), self.minutes_ratio(player_id))
 
     def fouls(self, player_id: int) -> int:
         """Return current foul count for *player_id*."""
@@ -231,22 +254,26 @@ def player_fatigue_threshold(p: Player) -> float:
     """Return the fatigue level at which *p* should be subbed out.
 
     Derived from the player's historical minutes share so high-minutes
-    players have higher thresholds and get subbed later. A safety-net
-    floor keeps low-minutes players from being subbed almost immediately
-    if thrust into extended duty, but the floor itself scales down with
-    the player's normal workload (capped at ``_MIN_THRESHOLD``) rather
-    than being one flat value shared by every role — otherwise a bench
-    player who rarely plays needs the same ~14 continuous minutes as a
-    starter to ever register as fatigued.
+    players have higher thresholds and get subbed later.
+
+    Below ~15 MPG, the threshold is simply the player's own normal-workload
+    fatigue level (capped at ``_MIN_THRESHOLD``, floored at
+    ``_ABS_MIN_THRESHOLD``) — i.e. they're flagged once they've played
+    about as much as they're used to. Above that, the usual
+    ``_THRESHOLD_FRACTION`` formula takes over (sub slightly before
+    reaching their normal workload). A single flat floor shared by every
+    role would otherwise force a rarely-used bench player to rack up the
+    same ~14 continuous minutes as a starter before ever registering as
+    fatigued.
     """
     ms = p.min_share if p.min_share is not None else _DEFAULT_MIN_SHARE
     target_minutes = ms * 200.0  # 5 slots × 40 min
     target_fatigue = target_minutes * 60 / MAX_STAMINA
-    scaled_threshold = target_fatigue * _THRESHOLD_FRACTION
-    role_floor = max(
-        _ABS_MIN_THRESHOLD, min(_MIN_THRESHOLD, target_fatigue * _FLOOR_MULTIPLIER)
+    return max(
+        _ABS_MIN_THRESHOLD,
+        min(_MIN_THRESHOLD, target_fatigue),
+        target_fatigue * _THRESHOLD_FRACTION,
     )
-    return max(scaled_threshold, role_floor)
 
 
 def check_substitutions(

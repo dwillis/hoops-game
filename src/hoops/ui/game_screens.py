@@ -1255,8 +1255,10 @@ class CoachSubScreen(Screen):
         for idx, p in enumerate(on_court):
             marker = " *" if self._pull_idx == idx else "  "
             # Fatigue relative to this player's own (star-aware) sub-out
-            # threshold, not a flat cutoff.
-            ratio = self.game.fatigue.fatigue_ratio(p.player_id)
+            # threshold, combined with cumulative overplay so rest between
+            # stints can't mask a player who's well past their normal
+            # workload for the game.
+            ratio = self.game.fatigue.display_fatigue_ratio(p.player_id)
             if ratio >= 1.0:
                 fatigue_bar = "[blink bold red]*** GASSED ***[/]"
             elif ratio >= 0.85:

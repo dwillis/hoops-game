@@ -251,7 +251,7 @@ class BoxScorePanel(Static):
             return {}
         roster = self._lineup.roster(side)
         return {
-            p.name: self._fatigue.fatigue_ratio(p.player_id)
+            p.name: self._fatigue.display_fatigue_ratio(p.player_id)
             for p in roster.players
             if p.player_id in self._fatigue._fatigue
         }
