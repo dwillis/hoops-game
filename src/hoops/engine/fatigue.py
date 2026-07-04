@@ -19,8 +19,13 @@ _THRESHOLD_FRACTION = 0.95       # sub at 95% of expected playing-time fatigue
 _DEFAULT_MIN_SHARE = 0.10        # fallback for players with no min_share data
 _MIN_THRESHOLD = 0.30            # cap on the role-scaled floor below (~14 min)
 _ABS_MIN_THRESHOLD = 0.12        # absolute floor so nobody flags after a few min
-_MINUTES_OVERAGE_ALLOWANCE = 1.05  # total minutes may run 5% over normal before flagging
 _RECOVERY_MULTIPLIER = 2.0       # bench recovery is 2× accumulation rate
+_FATIGUE_DEGRADE_COEF = 1.5      # performance-curve steepness past 100% workload
+
+# UI fatigue-tag cutoffs, expressed as a workload_ratio (1.0 = 100% of a
+# player's normal per-game minutes). Imported by the UI layer.
+WORKLOAD_TIRED = 1.05            # TIRED at 105% of normal workload
+WORKLOAD_GASSED = 1.30           # GASSED at 130% of normal workload
 _FOUL_TROUBLE_FIRST_HALF = 2    # Q1/Q2: 2+ fouls for non-stars
 _FOUL_TROUBLE_SECOND_HALF = 4   # Q3/Q4: 4+ fouls
 _FOULED_OUT = 5                  # WBB disqualification
@@ -51,14 +56,13 @@ def apply_fatigue(player: Player, fatigue: float) -> Player:
     """Return a copy of *player* with shooting and hustle rates degraded
     by *fatigue*.
 
-    *fatigue* is expected on the same scale as ``FatigueTracker.
-    effective_fatigue`` / ``display_fatigue_ratio``: 0 = fresh, 1.0 = at
-    the player's personal sub-out threshold (roughly the TIRED/GASSED
-    boundary), and beyond 1.0 for a player who's stayed in past that
-    point. Multiplier curve: ``effectiveness = max(0.40, 1.0 - 0.10 *
-    fatigue**3)`` — cubic so the falloff accelerates once a player is
-    pushed past their threshold rather than degrading gently throughout,
-    floored so even a very overworked player isn't reduced to nothing.
+    *fatigue* is a workload ratio (see ``FatigueTracker.workload_ratio``
+    / ``effective_fatigue``): 1.0 = exactly a player's normal per-game
+    minutes. There's no degradation at or below 1.0 — playing your
+    normal workload doesn't wear you down. Past 1.0, effectiveness
+    degrades quadratically with the excess over 100% (``effectiveness =
+    max(0.40, 1.0 - 1.5 * excess**2)``), floored so even a very
+    overworked player isn't reduced to nothing.
 
     * ``ts_pct``, ``ft_pct``, ``orb_pct``, ``drb_pct``, ``stl_pct``, and
       ``blk_pct`` are multiplied by effectiveness (degraded) — tired
@@ -68,10 +72,11 @@ def apply_fatigue(player: Player, fatigue: float) -> Player:
     * All other fields are unchanged.
     * If a rate is ``None``, it stays ``None``.
     """
-    if fatigue <= 0.0:
+    if fatigue <= 1.0:
         return player
 
-    effectiveness = max(0.40, 1.0 - 0.10 * fatigue ** 3)
+    excess = fatigue - 1.0
+    effectiveness = max(0.40, 1.0 - _FATIGUE_DEGRADE_COEF * excess ** 2)
 
     replacements: dict[str, float | None] = {}
 
@@ -103,58 +108,53 @@ class FatigueTracker:
         self._foul_hold: dict[int, tuple[int, int]] = {}
         self._total_seconds: dict[int, float] = {}
         self._players: dict[int, Player] = {}
+        self._team_games: dict[int, int] = {}
         for roster in (home_roster, away_roster):
             for p in roster.players:
                 self._fatigue[p.player_id] = 0.0
                 self._fouls[p.player_id] = 0
                 self._total_seconds[p.player_id] = 0.0
                 self._players[p.player_id] = p
+                self._team_games[p.player_id] = roster.team_games
 
     def fatigue(self, player_id: int) -> float:
         """Return current fatigue level for *player_id*."""
         return self._fatigue[player_id]
 
-    def fatigue_ratio(self, player_id: int) -> float:
-        """Return fatigue as a fraction of *player_id*'s personal sub-out
-        threshold (see ``player_fatigue_threshold``). 1.0 means they've hit
-        the point the engine would sub them out; stars reach 1.0 later
-        than role players at the same raw fatigue level."""
+    def workload_ratio(self, player_id: int) -> float:
+        """Fraction of *player_id*'s normal per-game workload used up so
+        far — 1.0 means exactly their normal minutes for a game, with no
+        early/late skew (unlike ``player_fatigue_threshold``, which is a
+        separate coaching-strategy heuristic for *when to sub*).
+
+        The "normal minutes" baseline is computed via ``Player.mpg()`` —
+        the same method the season-averages UI uses to display MPG — so
+        this always agrees with what's shown there. (``min_share``, used
+        by ``player_fatigue_threshold``, always divides by team games
+        played; ``mpg()`` uses the player's own games played once it's
+        at least 75% of the team's, so the two can otherwise disagree
+        for anyone who missed a game or two.)
+
+        Uses the worse of live continuous fatigue and cumulative total
+        minutes played, so a rest between stints can't mask a player who
+        has logged heavy total minutes for the game."""
         p = self._players.get(player_id)
         if p is None:
             return 0.0
-        threshold = player_fatigue_threshold(p)
-        return self._fatigue[player_id] / threshold if threshold > 0 else 0.0
-
-    def minutes_ratio(self, player_id: int) -> float:
-        """Return total minutes played this game as a fraction of
-        *player_id*'s normal-workload minutes, allowing a small overage
-        before reaching 1.0. Unlike ``fatigue_ratio``, this doesn't drop
-        when the player rests — a player who racks up big total minutes
-        via a well-rested rotation still reads as fatigued here, even if
-        their *live* fatigue has recovered between stints."""
-        p = self._players.get(player_id)
-        if p is None:
+        target_minutes = p.mpg(self._team_games.get(player_id, 0))
+        if target_minutes <= 0:
             return 0.0
-        ms = p.min_share if p.min_share is not None else _DEFAULT_MIN_SHARE
-        target = ms * 200.0
-        if target <= 0:
-            return 0.0
-        return self.total_minutes(player_id) / (target * _MINUTES_OVERAGE_ALLOWANCE)
-
-    def display_fatigue_ratio(self, player_id: int) -> float:
-        """Combined ratio used for UI fatigue indicators: the worse of
-        live fatigue (``fatigue_ratio``) and cumulative overplay
-        (``minutes_ratio``), so rest between stints can't mask a player
-        who has played well past their normal workload for the game."""
-        return max(self.fatigue_ratio(player_id), self.minutes_ratio(player_id))
+        target = target_minutes * 60.0 / MAX_STAMINA
+        minutes_based = self.total_minutes(player_id) * 60.0 / MAX_STAMINA
+        return max(self._fatigue[player_id], minutes_based) / target
 
     def effective_fatigue(self, player_id: int) -> float:
         """Return the fatigue value that should feed performance
         degradation (``apply_fatigue``) — an alias for
-        ``display_fatigue_ratio``, so a player tagged TIRED/GASSED in the
-        UI actually plays worse by the same measure, even if a recent
-        bench rest has brought their raw live fatigue back down."""
-        return self.display_fatigue_ratio(player_id)
+        ``workload_ratio``, so a player who has genuinely exceeded their
+        normal workload actually plays worse, even if a recent bench
+        rest has brought their raw live fatigue back down."""
+        return self.workload_ratio(player_id)
 
     def fouls(self, player_id: int) -> int:
         """Return current foul count for *player_id*."""
@@ -274,11 +274,22 @@ def foul_trouble_hold(quarter: int, seconds_left: int, rank: int) -> tuple[int, 
     return (quarter, seconds_left)
 
 
+def _target_fatigue(p: Player) -> float:
+    """Raw fatigue value equal to *p*'s normal per-game minutes — i.e.
+    100% of their usual workload, unscaled by any sub-timing heuristic."""
+    ms = p.min_share if p.min_share is not None else _DEFAULT_MIN_SHARE
+    target_minutes = ms * 200.0  # 5 slots × 40 min
+    return target_minutes * 60 / MAX_STAMINA
+
+
 def player_fatigue_threshold(p: Player) -> float:
     """Return the fatigue level at which *p* should be subbed out.
 
-    Derived from the player's historical minutes share so high-minutes
-    players have higher thresholds and get subbed later.
+    This is a coaching-strategy heuristic (used by ``check_substitutions``
+    and the CPU hot-hand veto), not a "how tired do they look" measure —
+    see ``FatigueTracker.workload_ratio`` for that. Derived from the
+    player's historical minutes share so high-minutes players have higher
+    thresholds and get subbed later.
 
     Below ~15 MPG, the threshold is simply the player's own normal-workload
     fatigue level (capped at ``_MIN_THRESHOLD``, floored at
@@ -290,9 +301,7 @@ def player_fatigue_threshold(p: Player) -> float:
     same ~14 continuous minutes as a starter before ever registering as
     fatigued.
     """
-    ms = p.min_share if p.min_share is not None else _DEFAULT_MIN_SHARE
-    target_minutes = ms * 200.0  # 5 slots × 40 min
-    target_fatigue = target_minutes * 60 / MAX_STAMINA
+    target_fatigue = _target_fatigue(p)
     return max(
         _ABS_MIN_THRESHOLD,
         min(_MIN_THRESHOLD, target_fatigue),

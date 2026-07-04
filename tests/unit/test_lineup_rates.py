@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 import math
 
 import numpy as np
@@ -241,16 +242,25 @@ def test_player_zone_make_prob_falls_back_to_team():
 
 
 def test_lineup_rates_with_fatigue_degrades_shooting():
-    players = _five_players()
+    """Playing well past a normal 10-min-per-game workload (200 season
+    minutes / 20 games) should degrade shooting/turnover rates."""
+    players = [
+        dataclasses.replace(p, minutes=200.0, games_played=20) for p in _five_players()
+    ]
     team = _team()
+    # Away roster uses distinct player_ids — FatigueTracker keys its
+    # per-player state (including games-played data) globally, and
+    # overlapping IDs across sides would silently clobber each other.
+    away_players = [
+        dataclasses.replace(p, player_id=p.player_id + 100) for p in _five_players()
+    ]
     hr = Roster(team_id=1, team_name="Home", players=tuple(players))
-    ar = Roster(team_id=2, team_name="Away", players=tuple(_five_players()))
+    ar = Roster(team_id=2, team_name="Away", players=tuple(away_players))
     ft = FatigueTracker(hr, ar)
 
     lr_fresh = compute_lineup_rates(players, team)
 
-    for p in players:
-        ft._fatigue[p.player_id] = 0.8
+    ft.tick([p.player_id for p in players], 40 * 60)  # 40 continuous minutes
 
     lr_tired = compute_lineup_rates(players, team, fatigue_tracker=ft)
     assert lr_tired.tov_pct > lr_fresh.tov_pct

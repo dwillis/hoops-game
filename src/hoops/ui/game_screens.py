@@ -12,6 +12,7 @@ from textual.widgets import Footer, Header, Static
 
 from hoops.data.rosters import Roster
 from hoops.engine.events import Event
+from hoops.engine.fatigue import WORKLOAD_GASSED, WORKLOAD_TIRED
 from hoops.engine.policy import CoachPolicies, DefensiveScheme, OffensiveScheme
 from hoops.engine.sampling import make_rng
 from hoops.engine.state import Side
@@ -1254,14 +1255,14 @@ class CoachSubScreen(Screen):
         rows = ["On court:", ""]
         for idx, p in enumerate(on_court):
             marker = " *" if self._pull_idx == idx else "  "
-            # Fatigue relative to this player's own (star-aware) sub-out
-            # threshold, combined with cumulative overplay so rest between
-            # stints can't mask a player who's well past their normal
-            # workload for the game.
-            ratio = self.game.fatigue.display_fatigue_ratio(p.player_id)
-            if ratio >= 1.0:
+            # Fraction of this player's own (star-aware) normal per-game
+            # workload used up, combined with cumulative overplay so rest
+            # between stints can't mask a player who's well past their
+            # normal workload for the game.
+            ratio = self.game.fatigue.workload_ratio(p.player_id)
+            if ratio >= WORKLOAD_GASSED:
                 fatigue_bar = "[blink bold red]*** GASSED ***[/]"
-            elif ratio >= 0.85:
+            elif ratio >= WORKLOAD_TIRED:
                 fatigue_bar = "[yellow]* TIRED[/]"
             else:
                 fatigue_bar = ""

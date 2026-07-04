@@ -72,6 +72,7 @@ class TeamSelectScreen(Screen):
         Binding("7", "cycle_home_off_scheme", "Home O-scheme", priority=True),
         Binding("8", "cycle_away_off_scheme", "Away O-scheme", priority=True),
         Binding("slash", "start_search", "/ search", priority=True),
+        Binding("n", "toggle_neutral_site", "Neutral site", priority=True),
     ]
 
     DEFAULT_CSS = """
@@ -160,7 +161,7 @@ class TeamSelectScreen(Screen):
         yield Header(show_clock=False)
         yield Static(
             "Pick teams (Tab/Enter)  ·  / search  ·  P play  ·  C coach side  ·  "
-            "1/2 scheme  ·  3/4 foul-up-3  ·  5/6 season  ·  Q quit",
+            "1/2 scheme  ·  3/4 foul-up-3  ·  5/6 season  ·  N neutral site  ·  Q quit",
             classes="intro",
         )
         self._home_priors, self._home_league_prior = self._load_priors(self.home_season)
@@ -182,7 +183,7 @@ class TeamSelectScreen(Screen):
         with Horizontal():
             with Vertical():
                 yield Static(
-                    f"HOME ({_short_season(self.home_season)})",
+                    self._header_text(Side.HOME),
                     classes="column-header",
                     id="home_header",
                 )
@@ -193,7 +194,7 @@ class TeamSelectScreen(Screen):
                 )
             with Vertical():
                 yield Static(
-                    f"AWAY ({_short_season(self.away_season)})",
+                    self._header_text(Side.AWAY),
                     classes="column-header",
                     id="away_header",
                 )
@@ -203,7 +204,7 @@ class TeamSelectScreen(Screen):
                     id="away_policy", classes="policy-line",
                 )
         yield Input(placeholder="Type to jump to team…", id="search-bar")
-        yield Static("(no teams selected)", id="status")
+        yield Static("(no teams selected)", id="status", markup=False)
         yield Footer()
 
     @staticmethod
@@ -256,12 +257,23 @@ class TeamSelectScreen(Screen):
             self.away_id = team_id
         self._refresh_status()
 
+    def _side_word(self, side: Side) -> str:
+        """Role label for *side* — HOME/AWAY normally, or a neutral-site
+        placeholder (neither team is truly "home" on a neutral court)."""
+        if self.neutral_site:
+            return "TEAM A" if side is Side.HOME else "TEAM B"
+        return "HOME" if side is Side.HOME else "AWAY"
+
+    def _header_text(self, side: Side) -> str:
+        season = self.home_season if side is Side.HOME else self.away_season
+        return f"{self._side_word(side)} ({_short_season(season)})"
+
     def _coach_label(self) -> str:
         if self.coach_side == "h2h":
             return "H2H"
         if self.coach_side is None:
             return "WATCH"
-        return "Coach HOME" if self.coach_side is Side.HOME else "Coach AWAY"
+        return f"Coach {self._side_word(self.coach_side)}"
 
     def _refresh_status(self) -> None:
         home = self._home_priors_by_id.get(self.home_id) if self.home_id else None
@@ -281,11 +293,22 @@ class TeamSelectScreen(Screen):
         else:
             suffix = ""
         coach = self._coach_label()
-        text = f"HOME: {home_label}    AWAY: {away_label}    [{coach}]    {suffix}".rstrip()
+        neutral_tag = "  [NEUTRAL SITE]" if self.neutral_site else ""
+        text = (
+            f"{self._side_word(Side.HOME)}: {home_label}    "
+            f"{self._side_word(Side.AWAY)}: {away_label}    [{coach}]"
+            f"{neutral_tag}    {suffix}"
+        ).rstrip()
         self.last_status_text = text
         self.query_one("#status", Static).update(text)
 
     # --- actions ----------------------------------------------------------
+
+    def action_toggle_neutral_site(self) -> None:
+        self.neutral_site = not self.neutral_site
+        self.query_one("#home_header", Static).update(self._header_text(Side.HOME))
+        self.query_one("#away_header", Static).update(self._header_text(Side.AWAY))
+        self._refresh_status()
 
     def action_focus_next_column(self) -> None:
         focused = self.focused
@@ -312,7 +335,7 @@ class TeamSelectScreen(Screen):
         self._home_records = _load_team_records(League.WBB, self.home_season)
         self.home_id = None
         self._rebuild_list("home_list", self._home_priors, self._home_records)
-        self.query_one("#home_header", Static).update(f"HOME ({_short_season(self.home_season)})")
+        self.query_one("#home_header", Static).update(self._header_text(Side.HOME))
         self._update_title()
         self._refresh_status()
 
@@ -323,7 +346,7 @@ class TeamSelectScreen(Screen):
         self._away_records = _load_team_records(League.WBB, self.away_season)
         self.away_id = None
         self._rebuild_list("away_list", self._away_priors, self._away_records)
-        self.query_one("#away_header", Static).update(f"AWAY ({_short_season(self.away_season)})")
+        self.query_one("#away_header", Static).update(self._header_text(Side.AWAY))
         self._update_title()
         self._refresh_status()
 

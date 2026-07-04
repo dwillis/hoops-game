@@ -478,13 +478,15 @@ class InteractiveGame:
         if self.state.seconds_left <= 0:
             return self._handle_period_end()
 
+        _prev_seconds_left = self.state.seconds_left
         evs = self._simulate_and_attribute()
         result_events: list[Event] = []
         result_events.extend(evs)
         self.all_events.extend(evs)
 
         self._record_cpu_trend(evs)
-        self._tick_fatigue()
+        poss_duration = max(0, _prev_seconds_left - self.state.seconds_left)
+        self._tick_fatigue(poss_duration)
 
         is_dead = any(
             e.type in ("shot_made", "foul_personal", "foul_shooting",
@@ -569,9 +571,14 @@ class InteractiveGame:
                 player=scorer,
             ))
 
-    def _tick_fatigue(self) -> None:
-        """Accumulate fatigue for on-court players and rest the bench."""
-        poss_duration = 17.0
+    def _tick_fatigue(self, poss_duration: float) -> None:
+        """Accumulate fatigue for on-court players and rest the bench.
+
+        *poss_duration* should be the actual simulated possession length
+        (matching the real game clock / displayed MIN column), not a
+        fixed average — otherwise fatigue-tracked minutes drift away from
+        real elapsed minutes whenever a team's pace differs from the
+        ~70 poss/40min baseline that a flat constant would assume."""
         home_on = [p.player_id for p in self.lineup.on_court(Side.HOME)]
         away_on = [p.player_id for p in self.lineup.on_court(Side.AWAY)]
         self.fatigue.tick(home_on + away_on, poss_duration)

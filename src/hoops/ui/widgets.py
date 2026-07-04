@@ -6,6 +6,7 @@ from textual.reactive import reactive
 from textual.widgets import RichLog, Static
 
 from hoops.engine.events import Event, fmt_clock, fmt_event
+from hoops.engine.fatigue import WORKLOAD_GASSED, WORKLOAD_TIRED
 from hoops.engine.state import Side
 from hoops.ui.playback import PlaybackState, PlayerBox
 
@@ -251,18 +252,18 @@ class BoxScorePanel(Static):
             return {}
         roster = self._lineup.roster(side)
         return {
-            p.name: self._fatigue.display_fatigue_ratio(p.player_id)
+            p.name: self._fatigue.workload_ratio(p.player_id)
             for p in roster.players
             if p.player_id in self._fatigue._fatigue
         }
 
     @staticmethod
     def _fatigue_tag(ratio: float) -> str:
-        # ratio is fatigue relative to this player's own sub-out threshold
-        # (star-aware), not a flat cutoff — 1.0 means "should be subbed."
-        if ratio >= 1.0:
+        # ratio is fraction of the player's normal per-game workload
+        # (star-aware) — 1.0 means exactly their usual minutes.
+        if ratio >= WORKLOAD_GASSED:
             return " [blink bold red]*** GASSED ***[/]"
-        if ratio >= 0.85:
+        if ratio >= WORKLOAD_TIRED:
             return " [yellow]* TIRED[/]"
         return ""
 

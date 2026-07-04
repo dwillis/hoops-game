@@ -222,6 +222,36 @@ async def test_picker_toggles_foul_up_3():
 
 
 @pytest.mark.asyncio
+async def test_picker_toggles_neutral_site():
+    """Pressing 'n' toggles neutral_site on and off."""
+    app = HoopsApp(season="2023-24")
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        screen = app.screen
+        assert screen.neutral_site is False
+
+        await pilot.press("n")
+        assert screen.neutral_site is True
+
+        await pilot.press("n")
+        assert screen.neutral_site is False
+
+
+@pytest.mark.asyncio
+async def test_picker_status_shows_neutral_site_tag():
+    """The status line shows [NEUTRAL SITE] only when the flag is on."""
+    app = HoopsApp(season="2023-24")
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        screen = app.screen
+        screen._refresh_status()
+        assert "NEUTRAL SITE" not in screen.last_status_text
+
+        await pilot.press("n")
+        assert "NEUTRAL SITE" in screen.last_status_text
+
+
+@pytest.mark.asyncio
 async def test_picker_policy_text_reflects_state():
     """The rendered policy text on each side reflects the current policy."""
     app = HoopsApp(season="2023-24")

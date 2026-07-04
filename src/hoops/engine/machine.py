@@ -520,6 +520,7 @@ def simulate_game(
         else:
             _off_lr, _def_lr = None, None
 
+        _prev_seconds_left = state.seconds_left
         state, evs = simulate_possession(
             state, home, away, rng, policies=policies,
             off_lineup_rates=_off_lr, def_lineup_rates=_def_lr,
@@ -529,7 +530,13 @@ def simulate_game(
 
         # --- Phase B: fatigue tick + auto-subs at dead balls ---
         if fatigue_tracker is not None and lineup_state is not None:
-            poss_duration = 17.0  # average WBB possession length
+            # Use the actual simulated possession length (matches the
+            # real game clock / displayed MIN column), not a fixed
+            # average — teams paced faster or slower than ~70 poss/40min,
+            # plus two-for-one/hold-for-last clock strategies, would
+            # otherwise drift fatigue-tracked minutes away from real
+            # elapsed minutes over a full game.
+            poss_duration = max(0, _prev_seconds_left - state.seconds_left)
 
             home_on = [p.player_id for p in lineup_state.on_court(Side.HOME)]
             away_on = [p.player_id for p in lineup_state.on_court(Side.AWAY)]

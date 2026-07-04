@@ -100,13 +100,13 @@ def test_player_importance_usage_weighted():
 
 def test_apply_fatigue_degrades_ts_pct():
     p = _player(1, "Tired", ts_pct=0.55, tov_pct=0.15)
-    adjusted = apply_fatigue(p, fatigue=0.8)
+    adjusted = apply_fatigue(p, fatigue=1.3)
     assert adjusted.ts_pct < 0.55
 
 
 def test_apply_fatigue_increases_tov_pct():
     p = _player(1, "Tired", tov_pct=0.15)
-    adjusted = apply_fatigue(p, fatigue=0.8)
+    adjusted = apply_fatigue(p, fatigue=1.3)
     assert adjusted.tov_pct > 0.15
 
 
@@ -117,9 +117,18 @@ def test_apply_fatigue_zero_is_identity():
     assert adjusted.tov_pct == p.tov_pct
 
 
+def test_apply_fatigue_no_degradation_at_normal_workload():
+    """Playing exactly (or under) your normal workload shouldn't degrade
+    performance — only exceeding 100% should."""
+    p = _player(1, "Normal", ts_pct=0.55, tov_pct=0.15)
+    adjusted = apply_fatigue(p, fatigue=1.0)
+    assert adjusted.ts_pct == p.ts_pct
+    assert adjusted.tov_pct == p.tov_pct
+
+
 def test_apply_fatigue_degrades_rebound_and_hustle_rates():
     p = _player(1, "Tired", orb_pct=3.0, drb_pct=8.0, stl_pct=2.5, blk_pct=0.8)
-    adjusted = apply_fatigue(p, fatigue=0.8)
+    adjusted = apply_fatigue(p, fatigue=1.3)
     assert adjusted.orb_pct < p.orb_pct
     assert adjusted.drb_pct < p.drb_pct
     assert adjusted.stl_pct < p.stl_pct
@@ -128,13 +137,13 @@ def test_apply_fatigue_degrades_rebound_and_hustle_rates():
 
 def test_apply_fatigue_increases_foul_rate():
     p = _player(1, "Tired", foul_rate=3.0)
-    adjusted = apply_fatigue(p, fatigue=0.8)
+    adjusted = apply_fatigue(p, fatigue=1.3)
     assert adjusted.foul_rate > p.foul_rate
 
 
 def test_apply_fatigue_preserves_identity_fields():
     p = _player(1, "Tired")
-    adjusted = apply_fatigue(p, fatigue=0.8)
+    adjusted = apply_fatigue(p, fatigue=1.3)
     assert adjusted.name == p.name
     assert adjusted.player_id == p.player_id
 
