@@ -135,8 +135,8 @@ def test_interactive_game_applies_hca_to_away():
     rules = Rules(
         league=League.WBB, structure="quarters", quarter_minutes=10,
         shot_clock_seconds=30, three_point_distance_ft=22.146,
-        bonus="per_quarter_5th_foul_two_shots", timeouts_per_team=4,
-        ot_minutes=5, personal_foul_limit=5,
+        bonus="per_quarter_5th_foul_two_shots", bonus_threshold_fouls=5,
+        timeouts_per_team=4, ot_minutes=5, personal_foul_limit=5,
     )
     game = InteractiveGame(
         home_priors, away_priors, rules, make_rng(seed=42),
@@ -177,8 +177,8 @@ def test_neutral_site_skips_hca():
     rules = Rules(
         league=League.WBB, structure="quarters", quarter_minutes=10,
         shot_clock_seconds=30, three_point_distance_ft=22.146,
-        bonus="per_quarter_5th_foul_two_shots", timeouts_per_team=4,
-        ot_minutes=5, personal_foul_limit=5,
+        bonus="per_quarter_5th_foul_two_shots", bonus_threshold_fouls=5,
+        timeouts_per_team=4, ot_minutes=5, personal_foul_limit=5,
     )
     game = InteractiveGame(
         home_priors, away_priors, rules, make_rng(seed=42),

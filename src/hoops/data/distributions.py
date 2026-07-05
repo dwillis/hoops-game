@@ -120,15 +120,6 @@ def load_team_priors(league: League, season: str) -> list[TeamPriors]:
     return [_row_to_team_priors(r) for r in df.iter_rows(named=True)]
 
 
-def load_team_prior(league: League, season: str, team_id: int) -> TeamPriors:
-    df = _read_parquet_or_raise(_team_priors_path(league, season), "team priors").filter(
-        pl.col("team_id") == team_id
-    )
-    if df.is_empty():
-        raise KeyError(f"no priors for team_id={team_id} in {league.value} {season}")
-    return _row_to_team_priors(next(df.iter_rows(named=True)))
-
-
 def load_league_prior(league: League, season: str) -> LeaguePrior:
     df = _read_parquet_or_raise(_league_prior_path(league, season), "league prior")
     return _row_to_league_prior(next(df.iter_rows(named=True)))

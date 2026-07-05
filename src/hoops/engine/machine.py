@@ -68,9 +68,10 @@ def _player_name(
 # Mean offensive possession length (seconds) at pace=70 over 40 minutes.
 # 40min * 60 / (2 * pace) gives mean per offensive possession assuming
 # both teams alternate. We sample uniform around this mean so the shot
-# clock is rarely exhausted but never exceeded.
+# clock is rarely exhausted but never exceeded. The upper bound is the
+# shot clock itself, read from ``state.rules.shot_clock_seconds`` rather
+# than hardcoded, so per-season rule changes take effect automatically.
 _MIN_POSS_SECONDS = 4
-_MAX_POSS_SECONDS = 30  # the WBB shot clock
 
 # End-of-quarter strategy thresholds (seconds left in the quarter).
 _TWO_FOR_ONE_WINDOW = (35, 50)  # if poss starts here, target ~17s shot
@@ -100,10 +101,11 @@ def _sample_possession_seconds(
       shot-clock limit (or buzzer, whichever is sooner) — this is the
       "no return possession" final shot.
     """
+    shot_clock = state.rules.shot_clock_seconds
     pace = 0.5 * (off.pace + def_.pace) + pace_adj
     mean = 40 * 60 / (2 * pace)
     lo = max(_MIN_POSS_SECONDS, mean - 6)
-    hi = min(_MAX_POSS_SECONDS, mean + 8)
+    hi = min(shot_clock, mean + 8)
     base = int(rng.triangular(lo, mean, hi))
 
     secs = state.seconds_left
@@ -116,8 +118,8 @@ def _sample_possession_seconds(
         return compressed
     if off_policy.hold_for_last and secs <= _HOLD_FOR_LAST_THRESHOLD:
         # Burn the clock to (just under) the shot clock or the buzzer.
-        return min(secs, _MAX_POSS_SECONDS - 2)
-    return max(_MIN_POSS_SECONDS, min(_MAX_POSS_SECONDS, base))
+        return min(secs, shot_clock - 2)
+    return max(_MIN_POSS_SECONDS, min(shot_clock, base))
 
 
 def _sample_zone(off: TeamPriors, rng: np.random.Generator) -> str:

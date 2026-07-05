@@ -12,13 +12,12 @@ from textual.widgets import Footer, Header, Static
 
 from hoops.data.rosters import Roster
 from hoops.engine.events import Event
-from hoops.engine.fatigue import WORKLOAD_GASSED, WORKLOAD_TIRED
 from hoops.engine.policy import CoachPolicies, DefensiveScheme, OffensiveScheme
 from hoops.engine.sampling import make_rng
 from hoops.engine.state import Side
 from hoops.ui.lineup import LineupError, LineupState
 from hoops.ui.playback import PlaybackState, PlayerBox
-from hoops.ui.widgets import BoxScorePanel, PossessionLog, Scoreboard
+from hoops.ui.widgets import BoxScorePanel, PossessionLog, Scoreboard, fatigue_tag
 
 # ---------------------------------------------------------------------------
 # Screens
@@ -1080,7 +1079,7 @@ class CoachGameScreen(Screen):
             d["h2h_awaiting_away"] = self._awaiting_away
         save_game(d, self.home_name, self.away_name, season)
         self.query_one("#coach-bar", Static).update("Game saved!")
-        self.set_timer(2.0, lambda: self._update_coach_bar())
+        self.set_timer(2.0, self._update_coach_bar)
 
     def action_load_game(self) -> None:
         from hoops.engine.interactive import InteractiveGame
@@ -1088,7 +1087,7 @@ class CoachGameScreen(Screen):
         season = max(self.game.home_priors.season, self.game.away_priors.season)
         if not has_save(self.home_name, self.away_name, season):
             self.query_one("#coach-bar", Static).update("No save found")
-            self.set_timer(2.0, lambda: self._update_coach_bar())
+            self.set_timer(2.0, self._update_coach_bar)
             return
         path = save_path_for(self.home_name, self.away_name, season)
         d = load_save(path)
@@ -1116,7 +1115,7 @@ class CoachGameScreen(Screen):
         self._refresh_panels()
         self._update_coach_bar()
         self.query_one("#coach-bar", Static).update("Game loaded!")
-        self.set_timer(2.0, lambda: self._update_coach_bar())
+        self.set_timer(2.0, self._update_coach_bar)
 
     def action_toggle_box_detail(self) -> None:
         self.box.toggle_detail()
@@ -1260,12 +1259,7 @@ class CoachSubScreen(Screen):
             # between stints can't mask a player who's well past their
             # normal workload for the game.
             ratio = self.game.fatigue.workload_ratio(p.player_id)
-            if ratio >= WORKLOAD_GASSED:
-                fatigue_bar = "[blink bold red]*** GASSED ***[/]"
-            elif ratio >= WORKLOAD_TIRED:
-                fatigue_bar = "[yellow]* TIRED[/]"
-            else:
-                fatigue_bar = ""
+            fatigue_bar = fatigue_tag(ratio)
             fouls = self.game.fatigue.fouls(p.player_id)
             mpg = p.mpg(team_gp)
             rows.append(f"{marker}{idx + 1}. {p.name}  ({mpg:.1f} mpg)  F:{fouls}  {fatigue_bar}")

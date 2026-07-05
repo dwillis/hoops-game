@@ -59,44 +59,44 @@ def _attribute_possession(
     the on-court five instead of the full roster.
     """
     out: list[Event] = []
-    for i, e in enumerate(evs):
+    for i, raw_ev in enumerate(evs):
         next_e = evs[i + 1] if i + 1 < len(evs) else None
-        e = lineup.attribute(e)
+        ev = lineup.attribute(raw_ev)
 
-        if e.type in ("foul_personal", "foul_shooting") and e.team is not None:
-            on_court = lineup.on_court(e.team)
+        if ev.type in ("foul_personal", "foul_shooting") and ev.team is not None:
+            on_court = lineup.on_court(ev.team)
             for p in on_court:
-                if p.name == e.player:
+                if p.name == ev.player:
                     fatigue.add_foul(p.player_id)
                     break
 
         assister_name = None
-        if e.type == "shot_made" and e.team is not None:
+        if ev.type == "shot_made" and ev.team is not None:
             if rng.random() < _ASSIST_PROB:
-                adhoc = lineup._adhoc(e.team)
-                assister = adhoc.assister(rng, exclude=e.player)
+                adhoc = lineup._adhoc(ev.team)
+                assister = adhoc.assister(rng, exclude=ev.player)
                 assister_name = assister.name
-                e = dataclasses.replace(e, assist_by=assister_name)
+                ev = dataclasses.replace(ev, assist_by=assister_name)
 
-        out.append(e)
+        out.append(ev)
 
         if assister_name is not None:
-            out.append(_credit_event(e, "assist", e.team, assister_name))
+            out.append(_credit_event(ev, "assist", ev.team, assister_name))
 
-        if e.type == "shot_missed" and e.team is not None:
+        if ev.type == "shot_missed" and ev.team is not None:
             fouled = next_e is not None and next_e.type == "foul_shooting"
             if not fouled and rng.random() < _BLOCK_PROB:
-                def_side = e.team.other
+                def_side = ev.team.other
                 adhoc = lineup._adhoc(def_side)
                 blocker = adhoc.blocker(rng)
-                out.append(_credit_event(e, "block", def_side, blocker.name))
+                out.append(_credit_event(ev, "block", def_side, blocker.name))
 
-        if e.type == "turnover" and e.team is not None:
+        if ev.type == "turnover" and ev.team is not None:
             if rng.random() < _STEAL_PROB:
-                def_side = e.team.other
+                def_side = ev.team.other
                 adhoc = lineup._adhoc(def_side)
                 stealer = adhoc.stealer(rng)
-                out.append(_credit_event(e, "steal", def_side, stealer.name))
+                out.append(_credit_event(ev, "steal", def_side, stealer.name))
 
     return out
 

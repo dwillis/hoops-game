@@ -28,7 +28,7 @@ WORKLOAD_TIRED = 1.05            # TIRED at 105% of normal workload
 WORKLOAD_GASSED = 1.30           # GASSED at 130% of normal workload
 _FOUL_TROUBLE_FIRST_HALF = 2    # Q1/Q2: 2+ fouls for non-stars
 _FOUL_TROUBLE_SECOND_HALF = 4   # Q3/Q4: 4+ fouls
-_FOULED_OUT = 5                  # WBB disqualification
+_FOULED_OUT = 5                  # WBB disqualification; Rules.personal_foul_limit
 _SUB_COOLDOWN = 10               # possessions before a subbed player can change status again
 _SUB_COOLDOWN_STAR = 8           # stars can re-enter faster
 
@@ -120,6 +120,11 @@ class FatigueTracker:
     def fatigue(self, player_id: int) -> float:
         """Return current fatigue level for *player_id*."""
         return self._fatigue[player_id]
+
+    def tracked(self, player_id: int) -> bool:
+        """Return whether *player_id* is one of the players this tracker
+        was initialized with (i.e. on either roster for this game)."""
+        return player_id in self._fatigue
 
     def workload_ratio(self, player_id: int) -> float:
         """Fraction of *player_id*'s normal per-game workload used up so

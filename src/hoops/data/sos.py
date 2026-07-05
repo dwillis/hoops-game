@@ -24,6 +24,7 @@ calls them with the right inputs per league.
 from __future__ import annotations
 
 from collections.abc import Mapping
+from itertools import chain
 
 import polars as pl
 
@@ -86,8 +87,10 @@ def adjust(
             new_def[t] = (1 - damping) * adj_def[t] + damping * target_def
 
         delta = max(
-            max(abs(new_off[t] - adj_off[t]) for t in teams),
-            max(abs(new_def[t] - adj_def[t]) for t in teams),
+            chain(
+                (abs(new_off[t] - adj_off[t]) for t in teams),
+                (abs(new_def[t] - adj_def[t]) for t in teams),
+            )
         )
         adj_off = new_off
         adj_def = new_def

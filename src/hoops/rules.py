@@ -26,6 +26,7 @@ class Rules(BaseModel):
     shot_clock_seconds: int
     three_point_distance_ft: float
     bonus: str
+    bonus_threshold_fouls: int
     timeouts_per_team: int
     ot_minutes: int
     personal_foul_limit: int

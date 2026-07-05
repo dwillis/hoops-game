@@ -72,8 +72,8 @@ class CoachPolicy:
     """Trailing late, opponent in bonus: foul off-ball to stop the clock."""
 
     timeouts_remaining: int = 4
-    """Per the rules table; decrements each call_timeout. v0 has no
-    engine effect (no momentum modeling) but the count is tracked so
+    """Per Rules.timeouts_per_team; decrements each call_timeout. v0 has
+    no engine effect (no momentum modeling) but the count is tracked so
     the UI can display it."""
 
 

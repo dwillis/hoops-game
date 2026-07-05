@@ -66,8 +66,8 @@ def _make_game(seed=42, human_side=Side.HOME):
     rules = Rules(
         league=League.WBB, structure="quarters", quarter_minutes=10,
         shot_clock_seconds=30, three_point_distance_ft=22.146,
-        bonus="per_quarter_5th_foul_two_shots", timeouts_per_team=4,
-        ot_minutes=5, personal_foul_limit=5,
+        bonus="per_quarter_5th_foul_two_shots", bonus_threshold_fouls=5,
+        timeouts_per_team=4, ot_minutes=5, personal_foul_limit=5,
     )
     hr = _roster(1, "Home")
     ar = _roster(2, "Away")

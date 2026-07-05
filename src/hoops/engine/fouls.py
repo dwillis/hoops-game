@@ -13,12 +13,11 @@ from __future__ import annotations
 
 from hoops.engine.state import GameState, Side
 
-BONUS_THRESHOLD_PER_QUARTER = 5
-
 
 def is_in_bonus(state: GameState, shooting_side: Side) -> bool:
-    """True if ``shooting_side``'s opponents have committed >= 5 fouls this quarter."""
+    """True if ``shooting_side``'s opponents have committed >= the rules'
+    bonus threshold in fouls this quarter."""
     if state.rules.bonus != "per_quarter_5th_foul_two_shots":
         raise ValueError(f"engine v0 only supports per-quarter bonus; got {state.rules.bonus!r}")
     defender_fouls = state.fouls_for(shooting_side.other)
-    return defender_fouls >= BONUS_THRESHOLD_PER_QUARTER
+    return defender_fouls >= state.rules.bonus_threshold_fouls

@@ -11,6 +11,7 @@ defaults: &quarters_30
   quarter_minutes: 10
   shot_clock_seconds: 30
   bonus: per_quarter_5th_foul_two_shots
+  bonus_threshold_fouls: 5
   timeouts_per_team: 4
   ot_minutes: 5
   personal_foul_limit: 5

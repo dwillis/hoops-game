@@ -20,11 +20,17 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from hoops.engine.events import Event
-from hoops.engine.fouls import BONUS_THRESHOLD_PER_QUARTER
 from hoops.engine.state import Side
 
 # Forward-only type reference; LineupState lives in hoops.ui.lineup but
 # is only imported lazily by callers to avoid circular imports.
+
+# PlaybackState reconstructs everything from the event stream alone (see
+# module docstring) and never sees the engine's ``Rules`` object, so this
+# must be kept in sync by hand with ``Rules.bonus_threshold_fouls`` in
+# data/rules/wbb.yaml — currently the only bonus rule the engine supports
+# (hoops.engine.fouls.is_in_bonus).
+_BONUS_THRESHOLD_PER_QUARTER = 5
 
 
 @dataclass
@@ -140,7 +146,7 @@ class PlaybackState:
         defender_fouls = (
             self.home_team_fouls_q if shooting_side is Side.AWAY else self.away_team_fouls_q
         )
-        return defender_fouls >= BONUS_THRESHOLD_PER_QUARTER
+        return defender_fouls >= _BONUS_THRESHOLD_PER_QUARTER
 
     # --- advancement --------------------------------------------------------
 

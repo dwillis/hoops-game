@@ -1,5 +1,6 @@
-"""``hoops`` CLI entrypoint. Phase 5 ships the ``play`` subcommand only;
-``simulate-season`` and ``bracket`` arrive in Phase 8.
+"""``hoops`` CLI entrypoint. Commands: play, bracket, conference, seasons,
+version. Batch season replays (``simulate-season``) are still scripted
+via ``hoops.sim.season`` rather than exposed as a CLI command.
 """
 
 from __future__ import annotations

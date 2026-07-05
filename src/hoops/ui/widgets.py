@@ -10,6 +10,19 @@ from hoops.engine.fatigue import WORKLOAD_GASSED, WORKLOAD_TIRED
 from hoops.engine.state import Side
 from hoops.ui.playback import PlaybackState, PlayerBox
 
+
+def fatigue_tag(ratio: float) -> str:
+    """Return the GASSED/TIRED markup tag for a workload ratio, or "" if
+    neither threshold is met. *ratio* is fraction of the player's normal
+    per-game workload (star-aware) — 1.0 means exactly their usual minutes.
+    """
+    if ratio >= WORKLOAD_GASSED:
+        return "[blink bold red]*** GASSED ***[/]"
+    if ratio >= WORKLOAD_TIRED:
+        return "[yellow]* TIRED[/]"
+    return ""
+
+
 # ---------------------------------------------------------------------------
 # Game-screen widgets
 # ---------------------------------------------------------------------------
@@ -254,18 +267,13 @@ class BoxScorePanel(Static):
         return {
             p.name: self._fatigue.workload_ratio(p.player_id)
             for p in roster.players
-            if p.player_id in self._fatigue._fatigue
+            if self._fatigue.tracked(p.player_id)
         }
 
     @staticmethod
     def _fatigue_tag(ratio: float) -> str:
-        # ratio is fraction of the player's normal per-game workload
-        # (star-aware) — 1.0 means exactly their usual minutes.
-        if ratio >= WORKLOAD_GASSED:
-            return " [blink bold red]*** GASSED ***[/]"
-        if ratio >= WORKLOAD_TIRED:
-            return " [yellow]* TIRED[/]"
-        return ""
+        tag = fatigue_tag(ratio)
+        return f" {tag}" if tag else ""
 
     def _render_player_view(self) -> None:
         p = self._playback
