@@ -35,10 +35,14 @@ _SUB_COOLDOWN_STAR = 8           # stars can re-enter faster
 
 @dataclasses.dataclass(frozen=True)
 class SubEvent:
-    """A substitution decision: *off_player_id* leaves, *on_player_id* enters."""
+    """A substitution decision: *off_player_id* leaves, *on_player_id* enters.
+
+    ``on_player_id is None`` means removal without replacement: the player
+    fouled out and no eligible substitute exists, so the team plays
+    short-handed (NCAA rule)."""
     side: Side
     off_player_id: int
-    on_player_id: int
+    on_player_id: int | None
 
 
 def player_importance(p: Player) -> float:
@@ -324,6 +328,7 @@ def check_substitutions(
     quarter: int,
     side: Side,
     seconds_left: int = 600,
+    manual_foul_outs: bool = False,
 ) -> list[SubEvent]:
     """Decide which players on *side* should be subbed out at a dead ball.
 
@@ -349,6 +354,11 @@ def check_substitutions(
         rank = rank_of[pid]
         fouls = tracker.fouls(pid)
         fatigue = tracker.fatigue(pid)
+
+        # Human-coached sides replace fouled-out players manually; never
+        # auto-sub them for any reason.
+        if manual_foul_outs and fouls >= _FOULED_OUT:
+            continue
 
         # Fouled out — mandatory sub.
         if fouls >= _FOULED_OUT:
@@ -405,7 +415,10 @@ def check_substitutions(
 
         if replacement is None:
             if reason == "fouled_out":
-                break
+                # Bench exhausted: remove without replacement (short-handed).
+                subs.append(
+                    SubEvent(side=side, off_player_id=p.player_id, on_player_id=None)
+                )
             continue
 
         subs.append(

@@ -146,13 +146,14 @@ class LineupState:
         """Remove a player from the floor without replacement (fouled out
         with no eligible substitutes — the team plays short-handed).
 
-        Any queued substitutions for *side* are discarded first, so the
-        shadow lineup mirrors the actual one and a later
-        ``commit_pending_subs`` can't resurrect the removed player.
-        (Callers operate at dead balls, where pending subs have already
-        been committed.)"""
-        self.discard_pending_subs(side)
+        Any queued substitutions for *side* are discarded (after
+        validating the player is on the floor, so a failed remove has no
+        side effects), keeping the shadow lineup mirroring the actual one
+        so a later ``commit_pending_subs`` can't resurrect the removed
+        player. (Callers operate at dead balls, where pending subs have
+        already been committed.)"""
         idx = self._find_in_actual(side, player_id)
+        self.discard_pending_subs(side)
         self.on_court(side).pop(idx)
         # Shadow now mirrors actual (same order), so pop by the same index.
         self.pending_on_court(side).pop(idx)

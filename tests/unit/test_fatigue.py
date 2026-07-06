@@ -404,3 +404,38 @@ def test_is_fouled_out():
     assert tracker.is_fouled_out(pid) is False
     tracker.add_foul(pid)
     assert tracker.is_fouled_out(pid) is True
+
+
+def test_fouled_out_with_empty_bench_returns_removal():
+    """When every bench player is also fouled out, the fouled-out on-court
+    player is removed without replacement (on_player_id=None)."""
+    home, away = _roster(1, "H", n=6), _roster(2, "A", n=6)
+    rng = np.random.default_rng(1)
+    ls = LineupState.with_default_starters(home, away, rng)
+    tracker = FatigueTracker(home, away)
+    victim = ls.on_court(Side.HOME)[0]
+    for _ in range(5):
+        tracker.add_foul(victim.player_id)
+    for bp in ls.bench(Side.HOME):  # exhaust the bench
+        for _ in range(5):
+            tracker.add_foul(bp.player_id)
+    subs = check_substitutions(ls, tracker, quarter=4, side=Side.HOME)
+    removal = [s for s in subs if s.off_player_id == victim.player_id]
+    assert len(removal) == 1
+    assert removal[0].on_player_id is None
+
+
+def test_manual_foul_outs_skips_fouled_out_players():
+    """With manual_foul_outs=True (human-coached side), fouled-out players
+    are never auto-subbed for any reason — the human must replace them."""
+    home, away = _roster(1, "H"), _roster(2, "A")
+    rng = np.random.default_rng(1)
+    ls = LineupState.with_default_starters(home, away, rng)
+    tracker = FatigueTracker(home, away)
+    victim = ls.on_court(Side.HOME)[0]
+    for _ in range(5):
+        tracker.add_foul(victim.player_id)
+    subs = check_substitutions(
+        ls, tracker, quarter=4, side=Side.HOME, manual_foul_outs=True
+    )
+    assert victim.player_id not in {s.off_player_id for s in subs}
