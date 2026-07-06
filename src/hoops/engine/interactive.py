@@ -451,7 +451,7 @@ class InteractiveGame:
 
         Raises ValueError if *on_player_id* has fouled out (5 personal fouls).
         """
-        if self.fatigue.fouls(on_player_id) >= 5:
+        if self.fatigue.is_fouled_out(on_player_id):
             raise ValueError("Cannot sub in a fouled-out player")
         self.lineup.substitute(side, off_player_id, on_player_id)
         star_ids = self._home_stars if side is Side.HOME else self._away_stars

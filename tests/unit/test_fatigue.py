@@ -393,3 +393,12 @@ def test_foul_trouble_hold_q4_late():
     """Late Q4 foul trouble: no hold, player returns immediately."""
     hold_q, hold_s = foul_trouble_hold(quarter=4, seconds_left=240, rank=3)
     assert hold_q == 4 and hold_s == 240
+
+
+def test_is_fouled_out():
+    tracker = FatigueTracker(_roster(1, "H"), _roster(2, "A"))
+    pid = 101
+    assert tracker.is_fouled_out(pid) is False
+    for _ in range(5):
+        tracker.add_foul(pid)
+    assert tracker.is_fouled_out(pid) is True

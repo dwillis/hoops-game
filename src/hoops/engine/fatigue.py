@@ -165,6 +165,10 @@ class FatigueTracker:
         """Return current foul count for *player_id*."""
         return self._fouls[player_id]
 
+    def is_fouled_out(self, player_id: int) -> bool:
+        """True once *player_id* has reached the disqualification limit."""
+        return self._fouls[player_id] >= _FOULED_OUT
+
     def tick(self, on_court_ids: list[int], duration_seconds: float) -> None:
         """Accumulate fatigue for players currently on the court."""
         increment = duration_seconds / MAX_STAMINA
