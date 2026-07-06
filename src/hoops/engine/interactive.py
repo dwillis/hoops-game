@@ -32,6 +32,7 @@ from hoops.engine.cpu_coach import (
 from hoops.engine.events import Event
 from hoops.engine.fatigue import (
     FatigueTracker,
+    SubEvent,
     check_substitutions,
     player_fatigue_threshold,
 )
@@ -723,43 +724,53 @@ class InteractiveGame:
         self.all_events.extend(cpu_sub_events)
         return result_events
 
+    def _apply_sub_event(self, se: SubEvent, star_ids: set[int]) -> Event:
+        """Apply one SubEvent (swap or short-handed removal) and return the
+        substitution Event describing it."""
+        off_name = _player_name(
+            se.off_player_id, se.side, self.home_roster, self.away_roster
+        )
+        if se.on_player_id is None:
+            self.lineup.remove(se.side, se.off_player_id)
+            detail = f"{off_name} fouled out — no substitutes"
+            player = off_name
+        else:
+            on_name = _player_name(
+                se.on_player_id, se.side, self.home_roster, self.away_roster
+            )
+            self.lineup.substitute(se.side, se.off_player_id, se.on_player_id)
+            self.fatigue.start_cooldown(se.off_player_id, se.off_player_id in star_ids)
+            self.fatigue.start_cooldown(se.on_player_id, se.on_player_id in star_ids)
+            detail = f"{on_name} in for {off_name}"
+            player = on_name
+        return Event(
+            quarter=self.state.quarter,
+            seconds_left=self.state.seconds_left,
+            type="substitution",
+            team=se.side,
+            detail=detail,
+            home_score=self.state.home_score,
+            away_score=self.state.away_score,
+            player=player,
+        )
+
     def _process_h2h_subs(self) -> list[Event]:
-        """H2H mode: fatigue auto-subs for BOTH sides (no CPU coaching)."""
+        """H2H mode: fatigue auto-subs for BOTH sides (no CPU coaching).
+        Fouled-out players are the humans' responsibility (manual_foul_outs)."""
         result_events: list[Event] = []
         for side in (Side.HOME, Side.AWAY):
             sub_events_data = check_substitutions(
                 self.lineup, self.fatigue, self.state.quarter, side,
-                self.state.seconds_left,
+                self.state.seconds_left, manual_foul_outs=True,
             )
-            if sub_events_data:
-                star_ids = self._home_stars if side is Side.HOME else self._away_stars
-                for se in sub_events_data:
-                    off_name = _player_name(
-                        se.off_player_id, se.side, self.home_roster, self.away_roster
-                    )
-                    on_name = _player_name(
-                        se.on_player_id, se.side, self.home_roster, self.away_roster
-                    )
-                    self.lineup.substitute(se.side, se.off_player_id, se.on_player_id)
-                    self.fatigue.start_cooldown(
-                        se.off_player_id, se.off_player_id in star_ids
-                    )
-                    self.fatigue.start_cooldown(
-                        se.on_player_id, se.on_player_id in star_ids
-                    )
-                    ev = Event(
-                        quarter=self.state.quarter,
-                        seconds_left=self.state.seconds_left,
-                        type="substitution",
-                        team=se.side,
-                        detail=f"{on_name} in for {off_name}",
-                        home_score=self.state.home_score,
-                        away_score=self.state.away_score,
-                        player=on_name,
-                    )
-                    result_events.append(ev)
-                    self.all_events.append(ev)
-                self._recompute_lineup_rates()
+            if not sub_events_data:
+                continue
+            star_ids = self._home_stars if side is Side.HOME else self._away_stars
+            for se in sub_events_data:
+                ev = self._apply_sub_event(se, star_ids)
+                result_events.append(ev)
+                self.all_events.append(ev)
+            self._recompute_lineup_rates()
         return result_events
 
     def _cpu_auto_subs(self) -> list[Event]:
@@ -776,10 +787,12 @@ class InteractiveGame:
         events: list[Event] = []
 
         for se in sub_events_data:
-            off_name = _player_name(se.off_player_id, se.side, self.home_roster, self.away_roster)
-
-            # Hot-hand veto: skip fatigue sub if player is hot.
-            if self.cpu_coach is not None:
+            # Hot-hand veto: skip fatigue sub if player is hot. Removals
+            # (on_player_id=None) are mandatory foul-outs — never vetoed.
+            if se.on_player_id is not None and self.cpu_coach is not None:
+                off_name = _player_name(
+                    se.off_player_id, se.side, self.home_roster, self.away_roster
+                )
                 fatigue_val = self.fatigue.fatigue(se.off_player_id)
                 fouls_val = self.fatigue.fouls(se.off_player_id)
                 is_foul_sub = fouls_val >= 5 or (
@@ -795,20 +808,7 @@ class InteractiveGame:
                         ):
                             continue
 
-            on_name = _player_name(se.on_player_id, se.side, self.home_roster, self.away_roster)
-            self.lineup.substitute(se.side, se.off_player_id, se.on_player_id)
-            self.fatigue.start_cooldown(se.off_player_id, se.off_player_id in star_ids)
-            self.fatigue.start_cooldown(se.on_player_id, se.on_player_id in star_ids)
-            events.append(Event(
-                quarter=self.state.quarter,
-                seconds_left=self.state.seconds_left,
-                type="substitution",
-                team=se.side,
-                detail=f"{on_name} in for {off_name}",
-                home_score=self.state.home_score,
-                away_score=self.state.away_score,
-                player=on_name,
-            ))
+            events.append(self._apply_sub_event(se, star_ids))
 
         if events:
             self._recompute_lineup_rates()

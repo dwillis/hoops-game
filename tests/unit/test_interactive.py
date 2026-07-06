@@ -491,3 +491,19 @@ def test_no_subs_after_made_fg_last_minute():
             return  # found a restricted window, test passes
     # If we never hit a pure made-FG dead ball, that's OK — the
     # dataclass-level assertions above cover the logic.
+
+
+def test_h2h_does_not_auto_sub_fouled_out_players():
+    """H2H: both sides are human-coached; a fouled-out player stays on court
+    (awaiting the human's manual replacement) rather than being auto-subbed."""
+    game = _make_game(human_side=None)
+    victim = game.lineup.on_court(Side.HOME)[0]
+    for _ in range(5):
+        game.fatigue.add_foul(victim.player_id)
+    events = game._process_h2h_subs()
+    subbed_out = [
+        e for e in events
+        if e.type == "substitution" and victim.name in (e.detail or "")
+    ]
+    assert subbed_out == []
+    assert victim.player_id in {p.player_id for p in game.lineup.on_court(Side.HOME)}
