@@ -443,3 +443,28 @@ def test_game_with_scheme_affinity_always_ends(seed):
         home_roster=hr, away_roster=ar, policies=zone_policy,
     )
     assert state.is_final
+
+
+# --- bench exhaustion / short-handed play ------------------------------------
+
+def test_batch_game_survives_bench_exhaustion():
+    """A 5-player roster (empty bench) must never crash or leave a
+    fouled-out player on the floor in batch sims. (Before this change the
+    fouled-out player illegally stayed on court.)"""
+    home = _synthetic_team("Home", team_id=1)
+    away = _synthetic_team("Away", team_id=2)
+    hr = Roster(
+        team_id=1, team_name="Home",
+        players=tuple(
+            _player_for_engine(100 + i, f"Home_P{i}", foul_rate=8.0)
+            for i in range(5)
+        ),
+    )
+    ar = _roster_for_engine(2, "Away")
+    for seed in range(5):
+        state, events = simulate_game(
+            home, away, RULES_2023_24, make_rng(seed=seed),
+            home_roster=hr, away_roster=ar,
+        )
+        assert state.is_final
+        assert any(e.type == "game_end" for e in events)

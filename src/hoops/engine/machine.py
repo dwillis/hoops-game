@@ -571,6 +571,21 @@ def simulate_game(
                     star_ids = _star_player_ids(roster) if roster else set()
                     for se in sub_events:
                         off_name = _player_name(se.off_player_id, se.side, home_roster, away_roster)
+                        if se.on_player_id is None:
+                            # Fouled out, bench exhausted: play short-handed.
+                            lineup_state.remove(se.side, se.off_player_id)
+                            lineup_changed = True
+                            events.append(Event(
+                                quarter=state.quarter,
+                                seconds_left=state.seconds_left,
+                                type="substitution",
+                                team=se.side,
+                                detail=f"{off_name} fouled out — no substitutes",
+                                home_score=state.home_score,
+                                away_score=state.away_score,
+                                player=off_name,
+                            ))
+                            continue
                         on_name = _player_name(se.on_player_id, se.side, home_roster, away_roster)
                         lineup_state.substitute(se.side, se.off_player_id, se.on_player_id)
                         lineup_changed = True
