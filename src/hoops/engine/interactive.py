@@ -449,7 +449,8 @@ class InteractiveGame:
     def substitute(self, side: Side, off_player_id: int, on_player_id: int) -> None:
         """Substitute a player for the given side (works in any mode).
 
-        Raises ValueError if *on_player_id* has fouled out (5 personal fouls).
+        Raises ValueError if *on_player_id* has fouled out (reached the
+        personal-foul limit).
         """
         if self.fatigue.is_fouled_out(on_player_id):
             raise ValueError("Cannot sub in a fouled-out player")

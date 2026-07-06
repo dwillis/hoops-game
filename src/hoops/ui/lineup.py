@@ -8,7 +8,8 @@ substitutions to take immediate effect on subsequent attributions.
 
 This module provides ``LineupState`` — an in-memory state object that
 mirrors the static attribution rules but constrains sampling to a
-mutable on-court roster of five per side. The Textual UI builds one of
+mutable on-court roster per side (normally five, fewer when playing
+short-handed). The Textual UI builds one of
 these once per game and threads it through ``PlaybackState``.
 
 Substitutions are made via :meth:`substitute(side, off_player_id, on_player_id)`
@@ -143,15 +144,18 @@ class LineupState:
 
     def remove(self, side: Side, player_id: int) -> None:
         """Remove a player from the floor without replacement (fouled out
-        with no eligible substitutes — the team plays short-handed)."""
+        with no eligible substitutes — the team plays short-handed).
+
+        Any queued substitutions for *side* are discarded first, so the
+        shadow lineup mirrors the actual one and a later
+        ``commit_pending_subs`` can't resurrect the removed player.
+        (Callers operate at dead balls, where pending subs have already
+        been committed.)"""
+        self.discard_pending_subs(side)
         idx = self._find_in_actual(side, player_id)
         self.on_court(side).pop(idx)
-        shadow = self.pending_on_court(side)
-        shadow_idx = next(
-            (i for i, p in enumerate(shadow) if p.player_id == player_id), None
-        )
-        if shadow_idx is not None:
-            shadow.pop(shadow_idx)
+        # Shadow now mirrors actual (same order), so pop by the same index.
+        self.pending_on_court(side).pop(idx)
 
     def _find_in_actual(self, side: Side, off_player_id: int) -> int:
         idx = next(
@@ -306,8 +310,8 @@ class LineupState:
         return e
 
     def _adhoc(self, side: Side) -> Roster:
-        """Build a Roster restricted to the side's on-court 5 so existing
-        weighted samplers work without modification."""
+        """Build a Roster restricted to the side's on-court players so
+        existing weighted samplers work without modification."""
         roster = self.roster(side)
         return Roster(
             team_id=roster.team_id,

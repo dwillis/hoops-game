@@ -399,6 +399,8 @@ def test_is_fouled_out():
     tracker = FatigueTracker(_roster(1, "H"), _roster(2, "A"))
     pid = 101
     assert tracker.is_fouled_out(pid) is False
-    for _ in range(5):
+    for _ in range(4):
         tracker.add_foul(pid)
+    assert tracker.is_fouled_out(pid) is False
+    tracker.add_foul(pid)
     assert tracker.is_fouled_out(pid) is True

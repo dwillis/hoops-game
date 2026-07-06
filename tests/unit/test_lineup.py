@@ -514,6 +514,24 @@ def test_remove_shrinks_lineup():
     assert off.player_id not in {p.player_id for p in ls.on_court(Side.HOME)}
     # Shadow (pending) lineup shrinks too, so queued-sub validation stays coherent.
     assert len(ls.pending_on_court(Side.HOME)) == 4
+    assert off.player_id not in {p.player_id for p in ls.pending_on_court(Side.HOME)}
+
+
+def test_remove_discards_queued_subs():
+    h = _roster(1, "Home", n=8)
+    a = _roster(2, "Away", n=8)
+    rng = np.random.default_rng(0)
+    ls = LineupState.with_default_starters(h, a, rng)
+    # Queue a replacement for the victim, then remove the victim: the
+    # queued sub must be discarded, not resurrected at the next dead ball.
+    ls.request_substitution(Side.HOME, off_player_id=1, on_player_id=6)
+    ls.remove(Side.HOME, 1)
+    assert len(ls.on_court(Side.HOME)) == 4
+    assert 1 not in {p.player_id for p in ls.on_court(Side.HOME)}
+    assert 1 not in {p.player_id for p in ls.pending_on_court(Side.HOME)}
+    assert ls.has_pending(Side.HOME) is False
+    ls.commit_pending_subs()
+    assert len(ls.on_court(Side.HOME)) == 4
 
 
 def test_remove_unknown_player_raises():
