@@ -499,3 +499,27 @@ def test_player_minutes_tracked_with_lineup():
     for name in bench_names:
         if name in pb.home_players:
             assert pb.home_players[name].seconds == 0.0
+
+
+# --- short-handed removal -------------------------------------------------------
+
+def test_remove_shrinks_lineup():
+    h = _roster(1, "Home", n=8)
+    a = _roster(2, "Away", n=8)
+    rng = np.random.default_rng(0)
+    ls = LineupState.with_default_starters(h, a, rng)
+    off = ls.on_court(Side.HOME)[0]
+    ls.remove(Side.HOME, off.player_id)
+    assert len(ls.on_court(Side.HOME)) == 4
+    assert off.player_id not in {p.player_id for p in ls.on_court(Side.HOME)}
+    # Shadow (pending) lineup shrinks too, so queued-sub validation stays coherent.
+    assert len(ls.pending_on_court(Side.HOME)) == 4
+
+
+def test_remove_unknown_player_raises():
+    h = _roster(1, "Home", n=8)
+    a = _roster(2, "Away", n=8)
+    rng = np.random.default_rng(0)
+    ls = LineupState.with_default_starters(h, a, rng)
+    with pytest.raises(LineupError):
+        ls.remove(Side.HOME, 99999)

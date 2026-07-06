@@ -141,6 +141,18 @@ class LineupState:
         if shadow_idx is not None:
             shadow[shadow_idx] = bench_player
 
+    def remove(self, side: Side, player_id: int) -> None:
+        """Remove a player from the floor without replacement (fouled out
+        with no eligible substitutes — the team plays short-handed)."""
+        idx = self._find_in_actual(side, player_id)
+        self.on_court(side).pop(idx)
+        shadow = self.pending_on_court(side)
+        shadow_idx = next(
+            (i for i, p in enumerate(shadow) if p.player_id == player_id), None
+        )
+        if shadow_idx is not None:
+            shadow.pop(shadow_idx)
+
     def _find_in_actual(self, side: Side, off_player_id: int) -> int:
         idx = next(
             (i for i, p in enumerate(self.on_court(side)) if p.player_id == off_player_id),
