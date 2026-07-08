@@ -345,6 +345,44 @@ def conference(
 
 
 @app.command()
+def serve(
+    host: str = typer.Option("localhost", "--host", help="Host to bind the web server to"),
+    port: int = typer.Option(8000, "--port", help="Port to bind the web server to"),
+    season: str = typer.Option(None, "--season", help="Season for both teams"),
+    seed: int = typer.Option(None, "--seed", help="RNG seed (random if omitted)"),
+    all_teams: bool = typer.Option(
+        False, "--all-teams",
+        help="Include sub-D-I teams in the picker (default: D-I only)",
+    ),
+    neutral: bool = typer.Option(
+        False, "--neutral",
+        help="Neutral site — no home court advantage",
+    ),
+) -> None:
+    """Serve the game in a web browser instead of the terminal.
+
+    Each browser tab that connects gets its own independent game
+    session (a fresh ``hoops play`` process).
+    """
+    import sys
+
+    from textual_serve.server import Server
+
+    cmd = [sys.executable, "-m", "hoops.cli", "play"]
+    if season is not None:
+        cmd += ["--season", season]
+    if seed is not None:
+        cmd += ["--seed", str(seed)]
+    if all_teams:
+        cmd.append("--all-teams")
+    if neutral:
+        cmd.append("--neutral")
+
+    server = Server(" ".join(cmd), host=host, port=port, title="Hoops 2026")
+    server.serve()
+
+
+@app.command()
 def version() -> None:
     """Print the installed hoops version."""
     from hoops import __version__
