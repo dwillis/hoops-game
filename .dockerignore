@@ -1,0 +1,13 @@
+.git
+.venv
+.worktrees
+.claude
+.pytest_cache
+__pycache__
+*.pyc
+data/raw
+docs
+tests
+saves
+dist
+build

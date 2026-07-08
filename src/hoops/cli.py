@@ -348,6 +348,12 @@ def conference(
 def serve(
     host: str = typer.Option("localhost", "--host", help="Host to bind the web server to"),
     port: int = typer.Option(8000, "--port", help="Port to bind the web server to"),
+    public_url: str = typer.Option(
+        None, "--public-url",
+        help="Public URL the app is reached at (e.g. https://myapp.fly.dev); "
+        "required behind a proxy so asset/WebSocket URLs resolve",
+        envvar="HOOPS_PUBLIC_URL",
+    ),
     season: str = typer.Option(None, "--season", help="Season for both teams"),
     seed: int = typer.Option(None, "--seed", help="RNG seed (random if omitted)"),
     all_teams: bool = typer.Option(
@@ -378,7 +384,10 @@ def serve(
     if neutral:
         cmd.append("--neutral")
 
-    server = Server(" ".join(cmd), host=host, port=port, title="Hoops 2026")
+    server = Server(
+        " ".join(cmd), host=host, port=port, title="Hoops 2026",
+        public_url=public_url,
+    )
     server.serve()
 
 
