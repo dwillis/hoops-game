@@ -22,15 +22,15 @@ defense drag the offense down.
 from __future__ import annotations
 
 from hoops.data.distributions import LeaguePrior, ShotMix, TeamPriors, ZoneEFG
-from hoops.engine.policy import DefensiveScheme, OffensiveScheme
+from hoops.engine.policy import DefensiveIntensity, DefensiveScheme, OffensiveScheme
+
+
+def _nominal_from(mix: ShotMix, zone: ZoneEFG) -> float:
+    return mix.rim * zone.rim + mix.mid * zone.mid + mix.three * zone.three * 1.5
 
 
 def _nominal_efg(p: TeamPriors) -> float:
-    return (
-        p.shot_mix.rim * p.zone_efg.rim
-        + p.shot_mix.mid * p.zone_efg.mid
-        + p.shot_mix.three * p.zone_efg.three * 1.5
-    )
+    return _nominal_from(p.shot_mix, p.zone_efg)
 
 
 def _clip(x: float, lo: float, hi: float) -> float:
@@ -69,50 +69,108 @@ def adjust_offense(
     })
 
 
-def apply_scheme(off: TeamPriors, scheme: DefensiveScheme) -> TeamPriors:
-    """Apply the defense's scheme to the offense's priors.
+def apply_scheme(
+    off: TeamPriors,
+    scheme: DefensiveScheme,
+    intensity: DefensiveIntensity = DefensiveIntensity.NORMAL,
+) -> TeamPriors:
+    """Apply the defense's scheme + intensity to the offense's priors.
 
     Per doc §3.4 we use *flat* adjustments because the scheme-tagged
     coaching data is too thin to fit multiplicative effects per team.
-    The directions encoded here:
+
+    Scheme directions (at NORMAL intensity):
 
     - **Man**: baseline (no change).
-    - **Zone**: chases shooters off the arc into mid-range; reduces 3pt
-      attempts (-3pp), bumps mid-range (+3pp); 3pt make rate dips slightly
-      (-2pp on the rate).
+    - **Zone**: chases shooters off the arc into mid-range (-3pp three
+      share, +3pp mid share); 3pt make rate dips (-2pp).
     - **Press**: forces turnovers (+3pp TOV%) but yields easier rim
-      attempts when broken (+3pp on rim eFG). Stylized but directional.
+      attempts when broken (+3pp rim eFG).
 
-    These shifts are small enough that league means stay roughly intact
-    if every team plays the same scheme — they're matchup-relative.
+    Intensity is orthogonal effort level, applied on top of the scheme:
+
+    - **Safe**: gives up cleaner looks (+1.5pp all-zone eFG) but fouls
+      less (-4pp opponent FTA rate) and gambles less (-1pp TOV%).
+    - **Tight**: contests everything (-1.5pp all-zone eFG) at the cost of
+      more fouls (+4pp opponent FTA rate) and more reach-in turnovers
+      (+1pp TOV%). The extra FTA rate flows through ``_shot_foul_prob`` into
+      the defense's team fouls, so tight defense really does foul more.
+
+    A few scheme×intensity combinations get small extra nudges (an all-out
+    tight press gambles harder and concedes more layups; a safe press just
+    contains). All magnitudes are directional and tunable — the identity
+    case (MAN + NORMAL) returns ``off`` untouched so default-policy games
+    and calibration are unaffected.
     """
-    if scheme is DefensiveScheme.MAN:
+    if scheme is DefensiveScheme.MAN and intensity is DefensiveIntensity.NORMAL:
         return off
+
+    # Accumulate flat deltas, then build one model_copy with clamps.
+    d_tov = 0.0
+    d_fta = 0.0
+    d_rim = d_mid = d_three = 0.0        # zone eFG deltas
+    d_share_mid = d_share_three = 0.0    # rim share is held fixed
+
+    # Base intensity block (uniform across schemes).
+    if intensity is DefensiveIntensity.TIGHT:
+        d_tov += 0.010
+        d_fta += 0.04
+        d_rim -= 0.015
+        d_mid -= 0.015
+        d_three -= 0.015
+    elif intensity is DefensiveIntensity.SAFE:
+        d_tov -= 0.010
+        d_fta -= 0.04
+        d_rim += 0.015
+        d_mid += 0.015
+        d_three += 0.015
+
+    # Scheme base.
     if scheme is DefensiveScheme.ZONE:
-        new_mix = ShotMix(
-            rim=off.shot_mix.rim,
-            mid=_clip(off.shot_mix.mid + 0.03, 0.05, 0.85),
-            three=_clip(off.shot_mix.three - 0.03, 0.05, 0.70),
-        )
-        new_zone = ZoneEFG(
-            rim=off.zone_efg.rim,
-            mid=off.zone_efg.mid,
-            three=_clip(off.zone_efg.three - 0.02, 0.05, 0.95),
-        )
-        return off.model_copy(update={
-            "shot_mix": new_mix,
-            "zone_efg": new_zone,
-        })
-    if scheme is DefensiveScheme.PRESS:
-        return off.model_copy(update={
-            "off_tov_pct": _clip(off.off_tov_pct + 0.03, 0.05, 0.45),
-            "zone_efg": ZoneEFG(
-                rim=_clip(off.zone_efg.rim + 0.03, 0.05, 0.95),
-                mid=off.zone_efg.mid,
-                three=off.zone_efg.three,
-            ),
-        })
-    return off
+        d_share_mid += 0.03
+        d_share_three -= 0.03
+        d_three -= 0.02
+    elif scheme is DefensiveScheme.PRESS:
+        d_tov += 0.03
+        d_rim += 0.03
+
+    # Scheme × intensity extras.
+    if scheme is DefensiveScheme.PRESS and intensity is DefensiveIntensity.TIGHT:
+        d_tov += 0.015
+        d_rim += 0.015
+        d_fta += 0.01
+    elif scheme is DefensiveScheme.PRESS and intensity is DefensiveIntensity.SAFE:
+        d_tov -= 0.010
+        d_rim -= 0.025
+    elif scheme is DefensiveScheme.ZONE and intensity is DefensiveIntensity.TIGHT:
+        d_share_three -= 0.01
+        d_share_mid += 0.01
+        d_three += 0.010
+    elif scheme is DefensiveScheme.ZONE and intensity is DefensiveIntensity.SAFE:
+        d_share_three += 0.01
+        d_share_mid -= 0.01
+        d_three -= 0.010
+
+    new_mix = ShotMix(
+        rim=off.shot_mix.rim,
+        mid=_clip(off.shot_mix.mid + d_share_mid, 0.05, 0.85),
+        three=_clip(off.shot_mix.three + d_share_three, 0.05, 0.70),
+    )
+    new_zone = ZoneEFG(
+        rim=_clip(off.zone_efg.rim + d_rim, 0.05, 0.95),
+        mid=_clip(off.zone_efg.mid + d_mid, 0.05, 0.95),
+        three=_clip(off.zone_efg.three + d_three, 0.05, 0.95),
+    )
+    return off.model_copy(update={
+        "off_tov_pct": _clip(off.off_tov_pct + d_tov, 0.05, 0.45),
+        "off_fta_rate": _clip(off.off_fta_rate + d_fta, 0.05, 0.60),
+        "shot_mix": new_mix,
+        "zone_efg": new_zone,
+        # Keep off_efg consistent with the adjusted zones (see P2 in the
+        # plan) so player_zone_make_prob's TS scaling divides by the right
+        # baseline.
+        "off_efg": _nominal_from(new_mix, new_zone),
+    })
 
 
 def apply_off_scheme(off: TeamPriors, scheme: OffensiveScheme) -> TeamPriors:
@@ -121,8 +179,13 @@ def apply_off_scheme(off: TeamPriors, scheme: OffensiveScheme) -> TeamPriors:
     Flat adjustments mirroring apply_scheme() for defense:
     - NORMAL: baseline (no change)
     - HURRY_UP: +3 pace, +1.5pp TOV%
-    - SLOW_DOWN: -3 pace, -1.5pp TOV%, -1pp all zone eFG
+    - SEMISTALL (formerly SLOW_DOWN): -3 pace, -1.5pp TOV%, -1pp all zone eFG
+    - STALL: -2.5pp all zone eFG, +2pp TOV%, -2pp FTA rate. Tempo is handled
+      directly in ``_sample_possession_seconds`` (clock bleed), not via pace.
     - THREE_POINT: +5pp three share / -5pp mid share, -1pp three eFG
+
+    Branches that change ``zone_efg``/``shot_mix`` also re-sync ``off_efg`` to
+    the new nominal (see P2 in the plan).
     """
     if scheme is OffensiveScheme.NORMAL:
         return off
@@ -131,28 +194,45 @@ def apply_off_scheme(off: TeamPriors, scheme: OffensiveScheme) -> TeamPriors:
             "pace": off.pace + 3.0,
             "off_tov_pct": _clip(off.off_tov_pct + 0.015, 0.05, 0.40),
         })
-    if scheme is OffensiveScheme.SLOW_DOWN:
+    if scheme is OffensiveScheme.SEMISTALL:
+        new_zone = ZoneEFG(
+            rim=_clip(off.zone_efg.rim - 0.01, 0.05, 0.95),
+            mid=_clip(off.zone_efg.mid - 0.01, 0.05, 0.95),
+            three=_clip(off.zone_efg.three - 0.01, 0.05, 0.95),
+        )
         return off.model_copy(update={
             "pace": off.pace - 3.0,
             "off_tov_pct": _clip(off.off_tov_pct - 0.015, 0.05, 0.40),
-            "zone_efg": ZoneEFG(
-                rim=_clip(off.zone_efg.rim - 0.01, 0.05, 0.95),
-                mid=_clip(off.zone_efg.mid - 0.01, 0.05, 0.95),
-                three=_clip(off.zone_efg.three - 0.01, 0.05, 0.95),
-            ),
+            "zone_efg": new_zone,
+            "off_efg": _nominal_from(off.shot_mix, new_zone),
+        })
+    if scheme is OffensiveScheme.STALL:
+        new_zone = ZoneEFG(
+            rim=_clip(off.zone_efg.rim - 0.025, 0.05, 0.95),
+            mid=_clip(off.zone_efg.mid - 0.025, 0.05, 0.95),
+            three=_clip(off.zone_efg.three - 0.025, 0.05, 0.95),
+        )
+        return off.model_copy(update={
+            "off_tov_pct": _clip(off.off_tov_pct + 0.02, 0.05, 0.40),
+            "off_fta_rate": _clip(off.off_fta_rate - 0.02, 0.05, 0.60),
+            "zone_efg": new_zone,
+            "off_efg": _nominal_from(off.shot_mix, new_zone),
         })
     if scheme is OffensiveScheme.THREE_POINT:
+        new_mix = ShotMix(
+            rim=off.shot_mix.rim,
+            mid=_clip(off.shot_mix.mid - 0.05, 0.05, 0.85),
+            three=_clip(off.shot_mix.three + 0.05, 0.05, 0.70),
+        )
+        new_zone = ZoneEFG(
+            rim=off.zone_efg.rim,
+            mid=off.zone_efg.mid,
+            three=_clip(off.zone_efg.three - 0.01, 0.05, 0.95),
+        )
         return off.model_copy(update={
-            "shot_mix": ShotMix(
-                rim=off.shot_mix.rim,
-                mid=_clip(off.shot_mix.mid - 0.05, 0.05, 0.85),
-                three=_clip(off.shot_mix.three + 0.05, 0.05, 0.70),
-            ),
-            "zone_efg": ZoneEFG(
-                rim=off.zone_efg.rim,
-                mid=off.zone_efg.mid,
-                three=_clip(off.zone_efg.three - 0.01, 0.05, 0.95),
-            ),
+            "shot_mix": new_mix,
+            "zone_efg": new_zone,
+            "off_efg": _nominal_from(new_mix, new_zone),
         })
     return off
 

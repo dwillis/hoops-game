@@ -45,14 +45,30 @@ def test_hurry_up_pace_and_tov():
     assert result.zone_efg == p.zone_efg
 
 
-def test_slow_down_pace_tov_and_efg():
+def test_semistall_pace_tov_and_efg():
+    # SEMISTALL keeps the former SLOW_DOWN constants exactly.
     p = _team_priors()
-    result = apply_off_scheme(p, OffensiveScheme.SLOW_DOWN)
+    result = apply_off_scheme(p, OffensiveScheme.SEMISTALL)
     assert result.pace == p.pace - 3.0
     assert result.off_tov_pct == pytest.approx(p.off_tov_pct - 0.015)
     assert result.zone_efg.rim == pytest.approx(p.zone_efg.rim - 0.01)
     assert result.zone_efg.mid == pytest.approx(p.zone_efg.mid - 0.01)
     assert result.zone_efg.three == pytest.approx(p.zone_efg.three - 0.01)
+
+
+def test_slow_down_string_aliases_to_semistall():
+    assert OffensiveScheme("slow_down") is OffensiveScheme.SEMISTALL
+
+
+def test_stall_costs_and_no_pace_change():
+    p = _team_priors()
+    result = apply_off_scheme(p, OffensiveScheme.STALL)
+    assert result.pace == p.pace  # tempo handled via clock bleed, not pace
+    assert result.off_tov_pct == pytest.approx(p.off_tov_pct + 0.02)
+    assert result.off_fta_rate == pytest.approx(p.off_fta_rate - 0.02)
+    assert result.zone_efg.rim == pytest.approx(p.zone_efg.rim - 0.025)
+    assert result.zone_efg.mid == pytest.approx(p.zone_efg.mid - 0.025)
+    assert result.zone_efg.three == pytest.approx(p.zone_efg.three - 0.025)
 
 
 def test_three_point_shot_mix_and_efg():
@@ -72,7 +88,7 @@ def test_hurry_up_tov_clipped():
     assert result.off_tov_pct == 0.40
 
 
-def test_slow_down_tov_clipped():
+def test_semistall_tov_clipped():
     p = _team_priors(off_tov_pct=0.06)
-    result = apply_off_scheme(p, OffensiveScheme.SLOW_DOWN)
+    result = apply_off_scheme(p, OffensiveScheme.SEMISTALL)
     assert result.off_tov_pct == 0.05

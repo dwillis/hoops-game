@@ -93,13 +93,27 @@ uv run hoops conference --season 2024-25 --conf "Big Ten" --team "USC"
 | Key | Action |
 |-----|--------|
 | `Space` | Advance one possession |
-| `F` | Fast-forward (hold) |
+| `A` | Toggle auto-play |
+| `F` | Sim to end |
 | `D` | Cycle defensive scheme (man / zone / press) |
-| `O` | Cycle offensive scheme (balanced / hurry / three-point) |
-| `U` | Toggle substitution screen |
+| `I` | Cycle defensive intensity (safe / normal / tight) |
+| `Y` | Cycle double-team % (0 / 20 / 40 / 60) |
+| `M` | Edit man-to-man matchups (swap who guards whom) |
+| `O` | Cycle offensive scheme (normal / hurry-up / semistall / stall / three-point) |
+| `U` | Edit per-player ball distribution (shot shares) |
+| `B` | Substitution screen |
+| `T` | Call timeout |
 | `X` | Cycle box score: team / players / season roster |
+| `G` | Team stats |
 | `S` | Save game |
 | `L` | Load game |
+
+Defensive **intensity** trades shot contests for fouls (tight = tougher looks but
+more fouls; safe = the reverse). **Stall** bleeds the shot clock every possession;
+**semistall** is the old slow-down. In **ball distribution**, forcing a player above
+her natural usage costs some shooting efficiency. **Double-team** traps the opponent's
+top scorer — more turnovers, but open teammates. **Matchups** (man defense only) let
+you put your best defender on their star, weakening another matchup in exchange.
 
 ## Available Seasons
 
@@ -120,7 +134,7 @@ The engine simulates possessions at the team level using fitted four-factor prio
 
 Lineup composition matters. Per-player rates are blended toward team priors using Bayesian shrinkage (players with more minutes get more weight on their individual stats). The on-court five affects pace, shooting efficiency, turnover rate, rebounding, and foul rate.
 
-The CPU coach has three personality types (aggressive, conservative, balanced) derived from team stats, and reacts to game flow: switching schemes when the opponent gets hot, pressing when trailing late, slowing down with a lead.
+The CPU coach has three personality types (aggressive, conservative, balanced) derived from team stats, and reacts to game flow: switching schemes when the opponent gets hot, pressing when trailing late, stalling to protect a lead, tightening or easing defensive intensity by foul trouble, and double-teaming a hot scorer.
 
 Matchup adjustments shift team priors based on the opponent's defensive profile. Home court advantage penalizes the away team's free throw shooting, turnover rate, and efficiency.
 

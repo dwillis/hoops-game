@@ -140,11 +140,18 @@ Once it's running, here are the keys you'll use most:
 | Key     | Action |
 |---------|--------|
 | `Space` | Advance one possession |
-| `F`     | Fast-forward (hold) |
+| `A`     | Toggle auto-play |
+| `F`     | Sim to end |
 | `D`     | Cycle defensive scheme (man / zone / press) |
-| `O`     | Cycle offensive scheme (balanced / hurry / three-point) |
-| `U`     | Toggle substitution screen |
+| `I`     | Cycle defensive intensity (safe / normal / tight) |
+| `Y`     | Cycle double-team % (0 / 20 / 40 / 60) |
+| `M`     | Edit man-to-man matchups |
+| `O`     | Cycle offensive scheme (normal / hurry-up / semistall / stall / three-point) |
+| `U`     | Edit per-player ball distribution |
+| `B`     | Substitution screen |
+| `T`     | Call timeout |
 | `X`     | Toggle box score detail |
+| `G`     | Team stats |
 | `S`     | Save game |
 | `L`     | Load game |
 

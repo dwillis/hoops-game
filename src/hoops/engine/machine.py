@@ -25,10 +25,18 @@ The model is deliberately small for engine v0:
 
 from __future__ import annotations
 
+import dataclasses
+
 import numpy as np
 
 from hoops.data.distributions import LeaguePrior, TeamPriors
 from hoops.data.rosters import Roster
+from hoops.engine.assignments import (
+    defensive_ratings,
+    resolve_actual_map,
+    shooter_foul_delta,
+    shooter_make_delta,
+)
 from hoops.engine.clock import end_period
 from hoops.engine.events import Event
 from hoops.engine.fatigue import FatigueTracker, check_substitutions
@@ -41,7 +49,12 @@ from hoops.engine.lineup_rates import (
     sample_shooter,
 )
 from hoops.engine.matchup import adjust_offense, apply_hca, apply_off_scheme, apply_scheme
-from hoops.engine.policy import CoachPolicies, CoachPolicy
+from hoops.engine.policy import (
+    CoachPolicies,
+    CoachPolicy,
+    DefensiveScheme,
+    OffensiveScheme,
+)
 from hoops.engine.state import GameState, Side
 from hoops.rules import Rules
 from hoops.ui.lineup import LineupState
@@ -100,15 +113,26 @@ def _sample_possession_seconds(
     - **hold_for_last**: if ≤30s remain, take the clock down to the
       shot-clock limit (or buzzer, whichever is sooner) — this is the
       "no return possession" final shot.
+
+    A STALL offensive scheme bleeds the clock to just under the shot clock
+    every possession, taking precedence over both hooks above.
     """
     shot_clock = state.rules.shot_clock_seconds
+    secs = state.seconds_left
+
+    # STALL: hold the ball to the last few seconds of the shot clock,
+    # regardless of tempo or end-of-quarter timing. A stalling team never
+    # hunts a two-for-one. Small jitter avoids robotic identical logs.
+    if off_policy.off_scheme is OffensiveScheme.STALL:
+        burn = shot_clock - 1 - int(rng.integers(0, 4))  # 26-29s on a 30s clock
+        return max(_MIN_POSS_SECONDS, min(secs, burn))
+
     pace = 0.5 * (off.pace + def_.pace) + pace_adj
     mean = 40 * 60 / (2 * pace)
     lo = max(_MIN_POSS_SECONDS, mean - 6)
     hi = min(shot_clock, mean + 8)
     base = int(rng.triangular(lo, mean, hi))
 
-    secs = state.seconds_left
     if (
         off_policy.two_for_one
         and _TWO_FOR_ONE_WINDOW[0] <= secs <= _TWO_FOR_ONE_WINDOW[1]
@@ -120,6 +144,14 @@ def _sample_possession_seconds(
         # Burn the clock to (just under) the shot clock or the buzzer.
         return min(secs, shot_clock - 2)
     return max(_MIN_POSS_SECONDS, min(shot_clock, base))
+
+
+def _effective_shot_weights(lr: LineupRates) -> list[float]:
+    """Current shot-selection weights for a lineup — coach distribution if
+    set, otherwise the usage weights carried on ``shooters``."""
+    if lr.shot_weights is not None:
+        return list(lr.shot_weights)
+    return [w for _, w in lr.shooters]
 
 
 def _sample_zone(off: TeamPriors, rng: np.random.Generator) -> str:
@@ -224,9 +256,16 @@ def simulate_possession(
     off_policy = policies.for_side(off_side)
     def_policy = policies.for_side(off_side.other)
 
-    # Apply schemes to the offense's effective priors.
-    off = apply_scheme(off, def_policy.scheme)
+    # Apply schemes to the offense's effective priors. Capture the turnover
+    # rate before/after so the scheme's TOV effect can be threaded into the
+    # lineup-rates branch below (where p_tov otherwise comes solely from the
+    # lineup blend and the scheme bump would be silently discarded). The
+    # delta is exactly 0.0 for MAN + NORMAL, preserving default-policy
+    # behavior bit-for-bit.
+    _pre_scheme_tov = off.off_tov_pct
+    off = apply_scheme(off, def_policy.scheme, def_policy.intensity)
     off = apply_off_scheme(off, off_policy.off_scheme)
+    _scheme_tov_delta = off.off_tov_pct - _pre_scheme_tov
 
     # Per-possession shooter (set when lineup_rates is provided).
     _shooter = None
@@ -294,11 +333,53 @@ def simulate_possession(
     )
     state = state.advance_clock(duration)
 
+    # Double-team decision. Guarded by ``> 0.0`` so the default (never double)
+    # consumes no RNG draw and stays bit-identical. Only meaningful with a
+    # lineup (there must be a "player" to double). When it fires this
+    # possession, the opponent's top scoring option is trapped: more forced
+    # turnovers, but her teammates get cleaner looks.
+    _dt_fired = False
+    _dt_target_idx = -1
+    if def_policy.double_team_pct > 0.0 and off_lineup_rates is not None:
+        if rng.random() < def_policy.double_team_pct:
+            _dt_fired = True
+            _eff_w = _effective_shot_weights(off_lineup_rates)
+            _dt_target_idx = int(np.argmax(_eff_w))
+            # Shift shots off the doubled player (weight x0.4, renormalized).
+            _w2 = list(_eff_w)
+            _w2[_dt_target_idx] *= 0.4
+            _s = sum(_w2)
+            if _s > 0:
+                _w2 = [x / _s for x in _w2]
+                off_lineup_rates = dataclasses.replace(
+                    off_lineup_rates, shot_weights=tuple(_w2)
+                )
+
+    # Defensive man-assignment context. Only active in MAN with a coach-set
+    # map; effects are deltas vs. the greedy default, so this is exactly
+    # neutral otherwise (no map -> no context -> no delta, no RNG use).
+    _asg_actual = _asg_default = _asg_ratings = _asg_def_by_id = None
+    if (
+        def_policy.scheme is DefensiveScheme.MAN
+        and def_policy.man_assignments is not None
+        and off_lineup_rates is not None
+        and def_lineup_rates is not None
+    ):
+        _defenders = [p for p, _ in def_lineup_rates.shooters]
+        _opponents = [p for p, _ in off_lineup_rates.shooters]
+        _asg_ratings = defensive_ratings(_defenders)
+        _asg_default = resolve_actual_map(None, _defenders, _opponents)
+        _asg_actual = resolve_actual_map(
+            def_policy.man_assignments, _defenders, _opponents
+        )
+        _asg_def_by_id = {p.player_id: p for p in _defenders}
+
     # Outcome: turnover or shot attempt. v0 routes all FTAs through
     # shooting fouls (see _shot_foul_prob); off-ball intentional fouls
     # are a Phase 6 hook that only matters once a CoachPolicy exists.
+    _dt_tov = 0.03 if _dt_fired else 0.0
     if off_lineup_rates is not None:
-        p_tov = max(0.0, min(0.5, off_lineup_rates.tov_pct))
+        p_tov = max(0.0, min(0.5, off_lineup_rates.tov_pct + _scheme_tov_delta + _dt_tov))
     else:
         p_tov = max(0.0, min(0.5, off.off_tov_pct))
 
@@ -307,6 +388,7 @@ def simulate_possession(
         events.append(Event(
             quarter=state.quarter, seconds_left=state.seconds_left,
             type="turnover", team=off_side,
+            detail="double_team" if _dt_fired else "",
             home_score=state.home_score, away_score=state.away_score,
         ))
         state = state.end_possession(off_side).with_possession(off_side.other)
@@ -324,14 +406,36 @@ def simulate_possession(
     # Shooting foul check before the make/miss roll. If the defense fouls
     # on the shot, the shot still happens; if it goes in, the offense
     # gets one extra free throw, otherwise they shoot ``points``.
-    shot_foul = rng.random() < _shot_foul_prob(off, zone)
+    _foul_p = _shot_foul_prob(off, zone)
+    if _asg_actual is not None and _shooter is not None:
+        # A G<->C mismatch (vs. the default assignment) reaches more.
+        _foul_p = max(0.0, min(0.60, _foul_p + shooter_foul_delta(
+            _asg_actual, _asg_default, _asg_def_by_id, _shooter,
+        )))
+    shot_foul = rng.random() < _foul_p
     if shot_foul:
         # Shooting foul accrues to the defense's per-quarter team fouls.
         # The log entry itself is appended after the shot result below,
         # so play-by-play reads shot attempt -> foul -> free throws.
         state = state.add_team_foul(off_side.other)
     if off_lineup_rates is not None and _shooter is not None:
-        made = rng.random() < player_zone_make_prob(_shooter, zone, off)
+        _make_p = player_zone_make_prob(_shooter, zone, off)
+        if _dt_fired:
+            # Trapped star shoots through two defenders (-3pp); an open
+            # teammate gets a cleaner look (+2pp).
+            is_target = (
+                0 <= _dt_target_idx < len(off_lineup_rates.shooters)
+                and _shooter is off_lineup_rates.shooters[_dt_target_idx][0]
+            )
+            _make_p = _make_p - 0.03 if is_target else _make_p + 0.02
+        if _asg_actual is not None:
+            # A tougher-than-default matchup lowers the make prob (and vice
+            # versa); zero when the coach hasn't changed the default map.
+            _make_p += shooter_make_delta(
+                _asg_actual, _asg_default, _asg_ratings, _asg_def_by_id, _shooter,
+            )
+        _make_p = max(0.05, min(0.95, _make_p))
+        made = rng.random() < _make_p
     else:
         made = rng.random() < _zone_make_prob(off, zone)
 
@@ -492,15 +596,19 @@ def simulate_game(
 
     _home_scheme = policies.for_side(Side.HOME).scheme if policies else None
     _away_scheme = policies.for_side(Side.AWAY).scheme if policies else None
+    _home_dist = policies.for_side(Side.HOME).shot_distribution if policies else None
+    _away_dist = policies.for_side(Side.AWAY).shot_distribution if policies else None
 
     if lineup_state is not None:
         home_lineup_rates = compute_lineup_rates(
             lineup_state.on_court(Side.HOME), home,
             fatigue_tracker=fatigue_tracker, scheme=_home_scheme,
+            shot_distribution=_home_dist,
         )
         away_lineup_rates = compute_lineup_rates(
             lineup_state.on_court(Side.AWAY), away,
             fatigue_tracker=fatigue_tracker, scheme=_away_scheme,
+            shot_distribution=_away_dist,
         )
 
     iters = 0
@@ -610,10 +718,12 @@ def simulate_game(
                     home_lineup_rates = compute_lineup_rates(
                         lineup_state.on_court(Side.HOME), home,
                         fatigue_tracker=fatigue_tracker, scheme=_home_scheme,
+                        shot_distribution=_home_dist,
                     )
                     away_lineup_rates = compute_lineup_rates(
                         lineup_state.on_court(Side.AWAY), away,
                         fatigue_tracker=fatigue_tracker, scheme=_away_scheme,
+                        shot_distribution=_away_dist,
                     )
 
     raise RuntimeError(

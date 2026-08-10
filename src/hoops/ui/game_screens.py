@@ -12,7 +12,12 @@ from textual.widgets import Footer, Header, Static
 
 from hoops.data.rosters import Roster
 from hoops.engine.events import Event
-from hoops.engine.policy import CoachPolicies, DefensiveScheme, OffensiveScheme
+from hoops.engine.policy import (
+    CoachPolicies,
+    DefensiveIntensity,
+    DefensiveScheme,
+    OffensiveScheme,
+)
 from hoops.engine.sampling import make_rng
 from hoops.engine.state import Side
 from hoops.ui.lineup import LineupError, LineupState
@@ -734,6 +739,10 @@ class CoachGameScreen(Screen):
         Binding("a", "toggle_auto", "Auto-play"),
         Binding("b", "open_subs", "Subs"),
         Binding("d", "cycle_scheme", "D-Scheme"),
+        Binding("i", "cycle_intensity", "D-Intensity"),
+        Binding("y", "cycle_double_team", "Double-team"),
+        Binding("u", "open_distribution", "Ball distribution"),
+        Binding("m", "open_assignments", "Matchups"),
         Binding("o", "cycle_off_scheme", "O-Scheme"),
         Binding("t", "call_timeout", "Timeout"),
         Binding("s", "save_game", "Save"),
@@ -859,11 +868,22 @@ class CoachGameScreen(Screen):
             callback=on_sub_screen_closed,
         )
 
+    @staticmethod
+    def _def_label(policy) -> str:
+        """Defensive label: scheme, intensity suffix (if not NORMAL), and a
+        double-team tag when active."""
+        label = policy.scheme.value.upper()
+        if policy.intensity is not DefensiveIntensity.NORMAL:
+            label = f"{label}-{policy.intensity.value.upper()}"
+        if policy.double_team_pct > 0.0:
+            label = f"{label} DT{int(round(policy.double_team_pct * 100))}"
+        return label
+
     def _coach_bar_text(self) -> str:
         h_to = self.game.policies.home.timeouts_remaining
         a_to = self.game.policies.away.timeouts_remaining
-        h_scheme = self.game.policies.home.scheme.value.upper()
-        a_scheme = self.game.policies.away.scheme.value.upper()
+        h_scheme = self._def_label(self.game.policies.home)
+        a_scheme = self._def_label(self.game.policies.away)
         pending = self._sub_requested_label()
 
         if self.h2h_mode:
@@ -876,20 +896,20 @@ class CoachGameScreen(Screen):
                 f"{home_marker}HOME: {self.home_name} [{h_scheme}/{h_off}] {h_to}TO  |  "
                 f"{away_marker}AWAY: {self.away_name} [{a_scheme}/{a_off}] {a_to}TO  ·  "
                 f"{active_name}'s turn{pending}  ·  "
-                "D: scheme  O: off-scheme  B: subs  T: timeout  Space: done"
+                "D: scheme  I: intensity  O: off-scheme  B: subs  T: timeout  Space: done"
             )
         else:
             side = "HOME" if self.game.human_side is Side.HOME else "AWAY"
-            scheme = self.game.human_policy().scheme.value.upper()
+            scheme = self._def_label(self.game.human_policy())
             off_scheme = self.game.human_policy().off_scheme.value.upper()
-            cpu_scheme = self.game.cpu_policy().scheme.value.upper()
+            cpu_scheme = self._def_label(self.game.cpu_policy())
             cpu_off_scheme = self.game.cpu_policy().off_scheme.value.upper()
             cpu_personality = self.game.cpu_coach.personality.value.capitalize()
             return (
                 f"Coaching: {side}  ·  D: {scheme}  O: {off_scheme}  ·  "
                 f"CPU: {cpu_scheme}/{cpu_off_scheme} ({cpu_personality})  ·  "
                 f"TOs: {self.home_name} {h_to} | {self.away_name} {a_to}{pending}  ·  "
-                "T: timeout  ·  B: subs  ·  D: scheme  ·  O: off-scheme  ·  S: save  ·  L: load"
+                "T: timeout · B: subs · D: scheme · I: intensity · O: off · S: save · L: load"
             )
 
     # --- actions ----------------------------------------------------------
@@ -1044,6 +1064,58 @@ class CoachGameScreen(Screen):
             next_scheme = order[(order.index(current) + 1) % len(order)]
             self.game.set_human_scheme(next_scheme)
         self._update_coach_bar()
+
+    def action_cycle_intensity(self) -> None:
+        order = list(DefensiveIntensity)
+        if self.h2h_mode:
+            current = self.game.policies.for_side(self._active_coach).intensity
+            nxt = order[(order.index(current) + 1) % len(order)]
+            self.game.set_intensity(self._active_coach, nxt)
+        else:
+            current = self.game.human_policy().intensity
+            nxt = order[(order.index(current) + 1) % len(order)]
+            self.game.set_human_intensity(nxt)
+        self._update_coach_bar()
+
+    _DOUBLE_TEAM_STEPS = (0.0, 0.2, 0.4, 0.6)
+
+    def action_cycle_double_team(self) -> None:
+        side = self._active_coach if self.h2h_mode else self.game.human_side
+        current = self.game.policies.for_side(side).double_team_pct
+        # Snap to the nearest step, then advance.
+        idx = min(
+            range(len(self._DOUBLE_TEAM_STEPS)),
+            key=lambda i: abs(self._DOUBLE_TEAM_STEPS[i] - current),
+        )
+        nxt = self._DOUBLE_TEAM_STEPS[(idx + 1) % len(self._DOUBLE_TEAM_STEPS)]
+        self.game.set_double_team_pct(side, nxt)
+        self._update_coach_bar()
+
+    def action_open_distribution(self) -> None:
+        if self.game.is_game_over:
+            return
+        side = self._active_coach if self.h2h_mode else self.game.human_side
+
+        def on_closed(_result) -> None:
+            self._update_coach_bar()
+
+        self.app.push_screen(
+            BallDistributionScreen(self.game, side, self.home_name, self.away_name),
+            callback=on_closed,
+        )
+
+    def action_open_assignments(self) -> None:
+        if self.game.is_game_over:
+            return
+        side = self._active_coach if self.h2h_mode else self.game.human_side
+
+        def on_closed(_result) -> None:
+            self._update_coach_bar()
+
+        self.app.push_screen(
+            DefenseAssignmentScreen(self.game, side, self.home_name, self.away_name),
+            callback=on_closed,
+        )
 
     def action_cycle_off_scheme(self) -> None:
         order = list(OffensiveScheme)
@@ -1309,4 +1381,271 @@ class CoachSubScreen(Screen):
 
     def action_close(self) -> None:
         self.dismiss(self._subs_made)
+
+
+class BallDistributionScreen(Screen):
+    """Set per-player shot shares for the on-court five (DOS-style ball
+    distribution). Selecting a player and pressing +/- shifts shots toward
+    or away from her; the remaining players renormalize. Pushing a player
+    above her natural usage taxes her shooting efficiency."""
+
+    BINDINGS = [
+        Binding("escape", "close", "Done"),
+        Binding("1", "select('0')", "P1", show=False),
+        Binding("2", "select('1')", "P2", show=False),
+        Binding("3", "select('2')", "P3", show=False),
+        Binding("4", "select('3')", "P4", show=False),
+        Binding("5", "select('4')", "P5", show=False),
+        Binding("plus,equals", "bump('1')", "More"),
+        Binding("minus,underscore", "bump('-1')", "Less"),
+        Binding("r", "reset", "Reset"),
+    ]
+
+    DEFAULT_CSS = """
+    BallDistributionScreen {
+        layout: vertical;
+    }
+    BallDistributionScreen .intro {
+        height: auto;
+        padding: 1 2;
+    }
+    BallDistributionScreen .body {
+        height: 1fr;
+        padding: 1 2;
+        border: solid $accent;
+    }
+    BallDistributionScreen #dist-status {
+        height: auto;
+        padding: 1 2;
+        border: solid $primary;
+    }
+    """
+
+    _STEP = 0.02
+
+    def __init__(self, game, side: Side, home_name: str, away_name: str):
+        super().__init__()
+        from hoops.engine.interactive import InteractiveGame
+        self.game: InteractiveGame = game
+        self._side = side
+        self.home_name = home_name
+        self.away_name = away_name
+        self._sel: int = 0
+        self._on_court = list(self.game.lineup.on_court(side))
+        self._natural = self._natural_shares()
+        # Working target shares, seeded from the current policy or natural usage.
+        policy_dist = self.game.policies.for_side(side).shot_distribution
+        if policy_dist:
+            self._shares = [
+                policy_dist.get(p.player_id, self._natural[i])
+                for i, p in enumerate(self._on_court)
+            ]
+            self._custom = True
+        else:
+            self._shares = list(self._natural)
+            self._custom = False
+
+    def _natural_shares(self) -> list[float]:
+        usage = [max(0.0, p.usage_pct if p.usage_pct is not None else 0.20)
+                 for p in self._on_court]
+        total = sum(usage)
+        if total <= 0:
+            return [1.0 / len(self._on_court)] * len(self._on_court)
+        return [u / total for u in usage]
+
+    @staticmethod
+    def _normalized(shares: list[float]) -> list[float]:
+        total = sum(shares)
+        if total <= 0:
+            return [1.0 / len(shares)] * len(shares)
+        return [s / total for s in shares]
+
+    def compose(self) -> ComposeResult:
+        side_label = "HOME" if self._side is Side.HOME else "AWAY"
+        yield Header(show_clock=False)
+        yield Static(
+            f"Ball distribution ({side_label})  ·  1-5 select  ·  +/- adjust  ·  "
+            "R reset to natural  ·  Esc done",
+            classes="intro",
+        )
+        yield Static(self._body_text(), classes="body", id="dist-body")
+        yield Static(self._status_text(), id="dist-status")
+        yield Footer()
+
+    def on_mount(self) -> None:
+        self.app.title = "Ball Distribution"
+
+    def _body_text(self) -> str:
+        shown = self._normalized(self._shares)
+        rows = ["Shot share (● = selected):", ""]
+        for i, p in enumerate(self._on_court):
+            marker = "● " if i == self._sel else "  "
+            nat = self._natural[i]
+            over = shown[i] - nat
+            tag = ""
+            if over > 0.005:
+                tag = "  (above usage — eFG tax)"
+            elif over < -0.005:
+                tag = "  (below usage)"
+            rows.append(
+                f"{marker}{i + 1}. {p.name:<22s} {shown[i] * 100:4.0f}%   "
+                f"natural {nat * 100:3.0f}%{tag}"
+            )
+        return "\n".join(rows)
+
+    def _status_text(self) -> str:
+        state = "custom" if self._custom else "natural (no override)"
+        return f"Distribution: {state}.  Adjust with +/-, R to reset, Esc to apply."
+
+    def _refresh(self) -> None:
+        self.query_one("#dist-body", Static).update(self._body_text())
+        self.query_one("#dist-status", Static).update(self._status_text())
+
+    def action_select(self, idx: str) -> None:
+        i = int(idx)
+        if 0 <= i < len(self._on_court):
+            self._sel = i
+        self._refresh()
+
+    def action_bump(self, direction: str) -> None:
+        delta = self._STEP * int(direction)
+        new_val = self._shares[self._sel] + delta
+        # Clamp to the engine's per-player share floor/ceiling.
+        self._shares[self._sel] = max(0.02, min(0.60, new_val))
+        self._custom = True
+        self._refresh()
+
+    def action_reset(self) -> None:
+        self._shares = list(self._natural)
+        self._custom = False
+        self._refresh()
+
+    def action_close(self) -> None:
+        if self._custom:
+            shares = self._normalized(self._shares)
+            dist = {p.player_id: shares[i] for i, p in enumerate(self._on_court)}
+            self.game.set_shot_distribution(self._side, dist)
+        else:
+            self.game.set_shot_distribution(self._side, None)
+        self.dismiss(self._custom)
+
+
+class DefenseAssignmentScreen(Screen):
+    """Man-to-man matchup editor (DOS-style "exchange two defenders").
+
+    Only meaningful when the side is in MAN. Shows each defender and who they
+    guard; select two defenders (1-5 then 1-5) to swap their assignments.
+    Effects are relative to the auto-matchups, so swapping your stopper onto
+    their star tightens that matchup at the cost of a weaker one elsewhere."""
+
+    BINDINGS = [
+        Binding("escape", "close", "Done"),
+        Binding("1", "pick('0')", "D1", show=False),
+        Binding("2", "pick('1')", "D2", show=False),
+        Binding("3", "pick('2')", "D3", show=False),
+        Binding("4", "pick('3')", "D4", show=False),
+        Binding("5", "pick('4')", "D5", show=False),
+        Binding("r", "reset", "Reset"),
+    ]
+
+    DEFAULT_CSS = """
+    DefenseAssignmentScreen {
+        layout: vertical;
+    }
+    DefenseAssignmentScreen .intro {
+        height: auto;
+        padding: 1 2;
+    }
+    DefenseAssignmentScreen .body {
+        height: 1fr;
+        padding: 1 2;
+        border: solid $accent;
+    }
+    DefenseAssignmentScreen #asg-status {
+        height: auto;
+        padding: 1 2;
+        border: solid $primary;
+    }
+    """
+
+    def __init__(self, game, side: Side, home_name: str, away_name: str):
+        super().__init__()
+        from hoops.engine.assignments import resolve_actual_map
+        from hoops.engine.interactive import InteractiveGame
+        self.game: InteractiveGame = game
+        self._side = side
+        self.home_name = home_name
+        self.away_name = away_name
+        self._defenders = list(self.game.lineup.on_court(side))
+        self._opponents = list(self.game.lineup.on_court(side.other))
+        self._opp_by_id = {p.player_id: p for p in self._opponents}
+        # Current map (coach's, resolved against the live lineups).
+        policy_map = self.game.policies.for_side(side).man_assignments
+        self._map = resolve_actual_map(policy_map, self._defenders, self._opponents)
+        self._first_pick: int | None = None
+        self._changed = False
+
+    def compose(self) -> ComposeResult:
+        side_label = "HOME" if self._side is Side.HOME else "AWAY"
+        yield Header(show_clock=False)
+        yield Static(
+            f"Matchups ({side_label} defense)  ·  pick two defenders (1-5) to swap  ·  "
+            "R reset to auto  ·  Esc done",
+            classes="intro",
+        )
+        yield Static(self._body_text(), classes="body", id="asg-body")
+        yield Static(self._status_text(), id="asg-status")
+        yield Footer()
+
+    def on_mount(self) -> None:
+        self.app.title = "Defensive Matchups"
+
+    def _body_text(self) -> str:
+        rows = ["Defender  →  guards", ""]
+        for i, d in enumerate(self._defenders):
+            marker = "● " if self._first_pick == i else "  "
+            opp_id = self._map.get(d.player_id)
+            opp = self._opp_by_id.get(opp_id)
+            opp_name = opp.name if opp is not None else "—"
+            rows.append(f"{marker}{i + 1}. {d.name:<20s} →  {opp_name}")
+        return "\n".join(rows)
+
+    def _status_text(self) -> str:
+        scheme = self.game.policies.for_side(self._side).scheme
+        note = "" if scheme.value == "man" else "  (only active in MAN defense)"
+        if self._first_pick is None:
+            return f"Pick a defender to reassign (1-5).{note}"
+        d = self._defenders[self._first_pick]
+        return f"Swap {d.name} with which defender? (1-5){note}"
+
+    def _refresh(self) -> None:
+        self.query_one("#asg-body", Static).update(self._body_text())
+        self.query_one("#asg-status", Static).update(self._status_text())
+
+    def action_pick(self, idx: str) -> None:
+        i = int(idx)
+        if not (0 <= i < len(self._defenders)):
+            return
+        if self._first_pick is None:
+            self._first_pick = i
+        else:
+            a, b = self._first_pick, i
+            if a != b:
+                da, db = self._defenders[a].player_id, self._defenders[b].player_id
+                self._map[da], self._map[db] = self._map[db], self._map[da]
+                self._changed = True
+                self.game.set_man_assignments(self._side, dict(self._map))
+            self._first_pick = None
+        self._refresh()
+
+    def action_reset(self) -> None:
+        from hoops.engine.assignments import resolve_actual_map
+        self._map = resolve_actual_map(None, self._defenders, self._opponents)
+        self._first_pick = None
+        self._changed = True
+        self.game.set_man_assignments(self._side, None)
+        self._refresh()
+
+    def action_close(self) -> None:
+        self.dismiss(self._changed)
 

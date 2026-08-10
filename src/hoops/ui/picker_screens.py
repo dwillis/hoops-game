@@ -18,7 +18,13 @@ from hoops.data.distributions import (
 )
 from hoops.data.paths import fitted_seasons, teams_path
 from hoops.data.rosters import load_roster
-from hoops.engine.policy import CoachPolicies, CoachPolicy, DefensiveScheme, OffensiveScheme
+from hoops.engine.policy import (
+    CoachPolicies,
+    CoachPolicy,
+    DefensiveIntensity,
+    DefensiveScheme,
+    OffensiveScheme,
+)
 from hoops.engine.state import Side
 from hoops.league import League
 from hoops.rules import rules_for
@@ -71,6 +77,8 @@ class TeamSelectScreen(Screen):
         Binding("6", "cycle_away_season", "Away season", priority=True),
         Binding("7", "cycle_home_off_scheme", "Home O-scheme", priority=True),
         Binding("8", "cycle_away_off_scheme", "Away O-scheme", priority=True),
+        Binding("9", "cycle_home_intensity", "Home intensity", priority=True),
+        Binding("0", "cycle_away_intensity", "Away intensity", priority=True),
         Binding("slash", "start_search", "/ search", priority=True),
         Binding("n", "toggle_neutral_site", "Neutral site", priority=True),
     ]
@@ -161,7 +169,8 @@ class TeamSelectScreen(Screen):
         yield Header(show_clock=False)
         yield Static(
             "Pick teams (Tab/Enter)  ·  / search  ·  P play  ·  C coach side  ·  "
-            "1/2 scheme  ·  3/4 foul-up-3  ·  5/6 season  ·  N neutral site  ·  Q quit",
+            "1/2 scheme  ·  9/0 intensity  ·  7/8 off-scheme  ·  3/4 foul-up-3  ·  "
+            "5/6 season  ·  N neutral  ·  Q quit",
             classes="intro",
         )
         self._home_priors, self._home_league_prior = self._load_priors(self.home_season)
@@ -218,6 +227,8 @@ class TeamSelectScreen(Screen):
     @staticmethod
     def _policy_text(p: CoachPolicy) -> str:
         scheme = p.scheme.value.upper()
+        if p.intensity is not DefensiveIntensity.NORMAL:
+            scheme = f"{scheme}-{p.intensity.value.upper()}"
         off = p.off_scheme.value.upper()
         foul = "ON" if p.foul_when_down_3 else "off"
         two = "ON" if p.two_for_one else "off"
@@ -384,6 +395,19 @@ class TeamSelectScreen(Screen):
     def _next_off_scheme(s: OffensiveScheme) -> OffensiveScheme:
         order = list(OffensiveScheme)
         return order[(order.index(s) + 1) % len(order)]
+
+    @staticmethod
+    def _next_intensity(i: DefensiveIntensity) -> DefensiveIntensity:
+        order = list(DefensiveIntensity)
+        return order[(order.index(i) + 1) % len(order)]
+
+    def action_cycle_home_intensity(self) -> None:
+        self.home_policy.intensity = self._next_intensity(self.home_policy.intensity)
+        self._refresh_policy_panels()
+
+    def action_cycle_away_intensity(self) -> None:
+        self.away_policy.intensity = self._next_intensity(self.away_policy.intensity)
+        self._refresh_policy_panels()
 
     def action_toggle_home_foul_up_3(self) -> None:
         self.home_policy.foul_when_down_3 = not self.home_policy.foul_when_down_3

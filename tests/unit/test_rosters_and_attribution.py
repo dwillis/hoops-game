@@ -195,23 +195,33 @@ def test_attribution_handles_intentional_foul_with_no_preceding_shot():
 
 
 def test_fmt_event_uses_natural_language():
+    from hoops.engine import vocabulary as v
+
     e = Event(
         quarter=1, seconds_left=540, type="shot_made", team=Side.HOME,
         detail="rim", home_score=2, away_score=0, player="Kamilla Cardoso",
     )
     out = fmt_event(e)
-    assert "Kamilla Cardoso made layup" in out
-    # No underscores in the rendered phrase.
+    assert "Kamilla Cardoso" in out
+    # No underscores / raw zone tokens leak into the rendered phrase.
     phrase = out.split("  ", 2)[-1]
     assert "_" not in phrase
+    # The predicate is one of the rim made-shot variants (no {dist} in rim).
+    predicate = v.phrase_for(e)[len("Kamilla Cardoso") + 1:]
+    assert predicate in {p for p, _ in v._MADE["rim"]}
 
 
 def test_fmt_event_renders_three_pointer():
+    from hoops.engine import vocabulary as v
+
     e = Event(
         quarter=2, seconds_left=120, type="shot_missed", team=Side.AWAY,
         detail="three", player="Caitlin Clark",
     )
-    assert "Caitlin Clark missed 3-pointer" in fmt_event(e)
+    out = fmt_event(e)
+    assert "Caitlin Clark" in out
+    predicate = v.phrase_for(e)[len("Caitlin Clark") + 1:]
+    assert predicate in {p for p, _ in v._MISSED["three"]}
 
 
 def test_fmt_event_renders_free_throw():

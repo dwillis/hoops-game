@@ -181,15 +181,17 @@ def test_call_timeout_with_zero_remaining_raises():
 def test_call_timeout_preserves_schemes():
     """Regression: call_timeout() used to rebuild CoachPolicy without
     off_scheme, silently resetting the offensive scheme to NORMAL."""
-    from hoops.engine.policy import OffensiveScheme
+    from hoops.engine.policy import DefensiveIntensity, OffensiveScheme
 
     game = _make_game()
     game.set_scheme(Side.HOME, DefensiveScheme.ZONE)
     game.set_off_scheme(Side.HOME, OffensiveScheme.HURRY_UP)
+    game.set_intensity(Side.HOME, DefensiveIntensity.TIGHT)
     game.call_timeout(Side.HOME)
     policy = game.policies.for_side(Side.HOME)
     assert policy.off_scheme is OffensiveScheme.HURRY_UP
     assert policy.scheme is DefensiveScheme.ZONE
+    assert policy.intensity is DefensiveIntensity.TIGHT
     assert policy.timeouts_remaining == 3
 
 
