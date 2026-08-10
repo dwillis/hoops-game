@@ -51,6 +51,10 @@ class LineupRates:
     shooters: tuple[tuple[Player, float], ...]
     pace_adj: float = 0.0
     efg_adj: float = 0.0
+    shot_weights: tuple[float, ...] | None = None
+    """Coach-set shot-selection weights parallel to ``shooters``. ``None``
+    means "use the usage weights in ``shooters``" (the default). Only shot
+    *selection* uses these — team-rate blends always use usage weights."""
 
 
 _POSITION_PACE_BONUS = {"G": 0.02, "F": 0.0, "C": -0.02}
@@ -66,11 +70,18 @@ def _position_bonus(position: str) -> float:
     return sum(bonuses) / len(bonuses) if bonuses else 0.0
 
 
+_SHOT_SHARE_FLOOR = 0.02
+_SHOT_SHARE_CEIL = 0.60
+_USAGE_TS_PENALTY_SLOPE = 0.6   # TS pp lost per share pp above natural usage
+_USAGE_TS_PENALTY_CAP = 0.10    # overuse beyond +10pp share stops adding penalty
+
+
 def compute_lineup_rates(
     on_court: list[Player],
     team_priors: TeamPriors,
     fatigue_tracker: FatigueTracker | None = None,
     scheme: DefensiveScheme | None = None,
+    shot_distribution: dict[int, float] | None = None,
 ) -> LineupRates:
     """Compute usage-weighted blended rates for *on_court* players.
 
@@ -153,8 +164,18 @@ def compute_lineup_rates(
             total_val += w * val
         return total_val
 
-    # 3. Build shooter tuples.
-    shooters = tuple((p, w) for p, w in zip(on_court, weights, strict=True))
+    # 3. Build shooter tuples. Coach-set ball distribution (if any) overrides
+    #    *shot selection* via a separate weight vector and taxes the eFG of
+    #    players pushed above their natural usage — but never touches the team
+    #    blends above, which keep using usage weights.
+    shooter_players = on_court
+    shot_weights = _resolve_shot_weights(on_court, weights, shot_distribution)
+    if shot_weights is not None:
+        shooter_players = [
+            _apply_usage_tax(p, shot_w, natural)
+            for p, shot_w, natural in zip(on_court, shot_weights, weights, strict=True)
+        ]
+    shooters = tuple((p, w) for p, w in zip(shooter_players, weights, strict=True))
 
     # Pace adjustment: compare lineup tempo proxy to team average.
     _TEAM_AVG_TEMPO = 0.20  # mean usage for a balanced team
@@ -184,7 +205,65 @@ def compute_lineup_rates(
         shooters=shooters,
         pace_adj=pace_adj,
         efg_adj=efg_adj,
+        shot_weights=shot_weights,
     )
+
+
+def _resolve_shot_weights(
+    on_court: list[Player],
+    natural_weights: list[float],
+    shot_distribution: dict[int, float] | None,
+) -> tuple[float, ...] | None:
+    """Turn a coach's shot-distribution map into a normalized weight vector.
+
+    Returns ``None`` (use usage weights, exact identity) when the map is empty
+    or has no entry for any on-court player. Otherwise: on-court players named
+    in the map get their requested share; unnamed on-court players split the
+    leftover in proportion to natural usage; every share is clamped to
+    ``[0.02, 0.60]`` and renormalized to sum 1."""
+    if not shot_distribution:
+        return None
+    ids = [p.player_id for p in on_court]
+    set_ids = [pid for pid in ids if pid in shot_distribution]
+    if not set_ids:
+        return None
+
+    set_sum = sum(shot_distribution[pid] for pid in set_ids)
+    leftover = max(0.0, 1.0 - set_sum)
+    unset_natural_sum = sum(
+        natural_weights[i] for i, pid in enumerate(ids) if pid not in shot_distribution
+    )
+
+    raw: list[float] = []
+    for i, pid in enumerate(ids):
+        if pid in shot_distribution:
+            raw.append(shot_distribution[pid])
+        elif unset_natural_sum > 0:
+            raw.append(natural_weights[i] * leftover / unset_natural_sum)
+        else:
+            raw.append(0.0)
+
+    clamped = [min(_SHOT_SHARE_CEIL, max(_SHOT_SHARE_FLOOR, r)) for r in raw]
+    total = sum(clamped)
+    if total <= 0:
+        return tuple(1.0 / len(ids) for _ in ids)
+    return tuple(c / total for c in clamped)
+
+
+def _apply_usage_tax(player: Player, shot_weight: float, natural_weight: float) -> Player:
+    """Tax a player's eFG for being pushed above their natural usage share.
+
+    -0.6pp TS per +1pp of shot share above natural usage, capped at -6pp.
+    FT% is intentionally not taxed (the penalty models shot difficulty, not
+    stroke). Returns the player unchanged when no eFG is available or the
+    player is not overused."""
+    if player.ts_pct is None:
+        return player
+    over = max(0.0, shot_weight - natural_weight)
+    if over <= 0:
+        return player
+    penalty = _USAGE_TS_PENALTY_SLOPE * min(over, _USAGE_TS_PENALTY_CAP)
+    return dataclasses.replace(player, ts_pct=player.ts_pct - penalty)
 
 
 # ---------------------------------------------------------------------------
@@ -193,12 +272,17 @@ def compute_lineup_rates(
 
 
 def sample_shooter(lr: LineupRates, rng: np.random.Generator) -> Player:
-    """Sample a shooter from the lineup weighted by usage weights.
+    """Sample a shooter from the lineup.
 
-    If all weights are zero, picks uniformly at random.
+    Uses the coach's ball-distribution weights (``shot_weights``) when set,
+    otherwise the usage weights carried on ``shooters``. If all weights are
+    zero, picks uniformly at random.
     """
     players = [p for p, _ in lr.shooters]
-    weights = np.array([w for _, w in lr.shooters])
+    if lr.shot_weights is not None:
+        weights = np.array(lr.shot_weights)
+    else:
+        weights = np.array([w for _, w in lr.shooters])
     if weights.sum() <= 0:
         return players[rng.integers(len(players))]
     probs = weights / weights.sum()

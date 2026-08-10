@@ -144,8 +144,10 @@ class PossessionLog(RichLog):
     _SCORING = {"shot_made", "free_throw_made"}
 
     def append_event(self, e: Event) -> None:
-        if e.type == "assist":
-            # Rendered inline on the preceding shot_made line instead.
+        if e.type in ("assist", "steal", "block"):
+            # Rendered inline on the preceding shot/turnover line instead
+            # (via assist_by / stolen_by / blocked_by). The standalone
+            # events still feed the box score.
             return
         line = fmt_event(e, self.home_short, self.away_short)
         if e.type in self._SCORING:

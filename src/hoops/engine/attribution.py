@@ -117,11 +117,13 @@ def attribute_players(
                 )
                 shooter_name = shooter.name
             pending_ft_shooter[attacker_side] = shooter_name
-            out.append(dataclasses.replace(e, player=shooter_name))
             fouled = next_e is not None and next_e.type == "foul_shooting"
+            blocker_name = None
             if not fouled and rng.random() < _BLOCK_PROB:
-                blocker = rosters[defender_side].blocker(rng)
-                out.append(_credit_event(e, "block", defender_side, blocker.name))
+                blocker_name = rosters[defender_side].blocker(rng).name
+            out.append(dataclasses.replace(e, player=shooter_name, blocked_by=blocker_name))
+            if blocker_name is not None:
+                out.append(_credit_event(e, "block", defender_side, blocker_name))
             continue
 
         if e.type == "free_throw_made" or e.type == "free_throw_missed":
@@ -157,13 +159,17 @@ def attribute_players(
 
         if e.type == "turnover":
             t = rosters[e.team].turnover(rng)
-            out.append(dataclasses.replace(e, player=t.name))
             pending_ft_shooter[Side.HOME] = None
             pending_ft_shooter[Side.AWAY] = None
-            # Maybe credit a steal to a defender.
-            if rng.random() < _STEAL_PROB:
-                stealer = rosters[defender_side].stealer(rng)
-                out.append(_credit_event(e, "steal", defender_side, stealer.name))
+            # Maybe credit a steal to a defender. Trapped (double-team)
+            # turnovers are predominantly live-ball steals.
+            steal_prob = 0.75 if "double_team" in (e.detail or "") else _STEAL_PROB
+            stealer_name = None
+            if rng.random() < steal_prob:
+                stealer_name = rosters[defender_side].stealer(rng).name
+            out.append(dataclasses.replace(e, player=t.name, stolen_by=stealer_name))
+            if stealer_name is not None:
+                out.append(_credit_event(e, "steal", defender_side, stealer_name))
             continue
 
         out.append(e)

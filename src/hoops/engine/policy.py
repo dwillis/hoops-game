@@ -27,21 +27,46 @@ from hoops.engine.state import Side
 
 
 class DefensiveScheme(str, Enum):
-    """Doc §3.4: man / zone / press is the granularity our coaching data
-    supports. Per-possession switching is a Phase 7 concern."""
+    """Doc §3.4: man / zone / press is the base granularity. Effort level
+    (safe / normal / tight) is an orthogonal knob — see DefensiveIntensity."""
 
     MAN = "man"
     ZONE = "zone"
     PRESS = "press"
 
 
+class DefensiveIntensity(str, Enum):
+    """How hard the defense pressures, orthogonal to the scheme.
+
+    NORMAL is the identity baseline (no adjustment). TIGHT trades better
+    shot contests for more fouls; SAFE gives up cleaner looks but fouls
+    less and gambles less. Applied on top of the scheme in apply_scheme."""
+
+    SAFE = "safe"
+    NORMAL = "normal"
+    TIGHT = "tight"
+
+
 class OffensiveScheme(str, Enum):
-    """Offensive tempo/shot-selection scheme."""
+    """Offensive tempo/shot-selection scheme.
+
+    SEMISTALL is the former SLOW_DOWN (renamed for the DOS-style stall
+    family); the legacy ``"slow_down"`` string still deserializes to it via
+    :meth:`_missing_`. STALL is the full clock-bleed set."""
 
     NORMAL = "normal"
     HURRY_UP = "hurry_up"
-    SLOW_DOWN = "slow_down"
+    SEMISTALL = "semistall"
+    STALL = "stall"
     THREE_POINT = "three_point"
+
+    @classmethod
+    def _missing_(cls, value: object) -> OffensiveScheme | None:
+        # Backward compatibility: saves written before the stall family used
+        # "slow_down" for what is now SEMISTALL.
+        if value == "slow_down":
+            return cls.SEMISTALL
+        return None
 
 
 @dataclass
@@ -50,6 +75,7 @@ class CoachPolicy:
     so callers can override only what they care about."""
 
     scheme: DefensiveScheme = DefensiveScheme.MAN
+    intensity: DefensiveIntensity = DefensiveIntensity.NORMAL
     off_scheme: OffensiveScheme = OffensiveScheme.NORMAL
 
     # End-of-quarter timing
@@ -75,6 +101,24 @@ class CoachPolicy:
     """Per Rules.timeouts_per_team; decrements each call_timeout. v0 has
     no engine effect (no momentum modeling) but the count is tracked so
     the UI can display it."""
+
+    # Per-player coaching (roster-dependent; None/0 = identity behavior)
+    shot_distribution: dict[int, float] | None = None
+    """Optional coach-set shot shares, ``player_id -> desired share`` (0..1),
+    for the on-court five. ``None`` (the default) uses natural usage. Shares
+    for benched players are ignored; unset on-court players split the leftover
+    by usage. Pushing a player above their natural usage taxes their eFG."""
+
+    double_team_pct: float = 0.0
+    """Probability [0..1] of double-teaming the opponent's top scoring option
+    each possession. 0.0 (default) never doubles. Doubling forces more
+    turnovers and steals but opens up the doubled player's teammates."""
+
+    man_assignments: dict[int, int] | None = None
+    """Optional man-to-man matchups, ``defender_id -> opponent_id``. Only
+    used when ``scheme`` is MAN. ``None`` (default) uses the auto-generated
+    matchups, which are exactly neutral. Effects are computed as deltas versus
+    that default, so a coach swap onto a star is a real tradeoff."""
 
 
 @dataclass

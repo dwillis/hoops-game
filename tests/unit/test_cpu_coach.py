@@ -10,8 +10,23 @@ from hoops.engine.cpu_coach import (
     TrendTracker,
     assign_personality,
 )
-from hoops.engine.policy import CoachPolicy, DefensiveScheme, OffensiveScheme
+from hoops.engine.policy import (
+    CoachPolicy,
+    DefensiveIntensity,
+    DefensiveScheme,
+    OffensiveScheme,
+)
 from hoops.engine.state import Side
+
+
+class _FakeFatigue:
+    """Minimal stand-in exposing only ``fouls(pid)`` for intensity tests."""
+
+    def __init__(self, fouls_by_id):
+        self._f = fouls_by_id
+
+    def fouls(self, pid):
+        return self._f.get(pid, 0)
 
 
 def test_trend_tracker_records_summaries():
@@ -122,6 +137,51 @@ def test_conservative_personality_strong_defense():
 
 def test_balanced_personality():
     assert assign_personality(pace=68.0, off_tov_pct=0.18, def_efg=0.44) is CpuPersonality.BALANCED
+
+
+# --- defensive intensity --------------------------------------------------
+
+def test_aggressive_coach_opens_tight():
+    coach = CpuCoach(cpu_side=Side.AWAY, personality=CpuPersonality.AGGRESSIVE)
+    assert coach.current_intensity is DefensiveIntensity.TIGHT
+
+
+def test_non_aggressive_coach_opens_normal():
+    coach = CpuCoach(cpu_side=Side.AWAY, personality=CpuPersonality.BALANCED)
+    assert coach.current_intensity is DefensiveIntensity.NORMAL
+
+
+def test_intensity_drops_to_safe_in_foul_trouble():
+    coach = CpuCoach(cpu_side=Side.AWAY, personality=CpuPersonality.BALANCED)
+    on_court = [_player(i, f"P{i}") for i in range(1, 6)]
+    # Two players at the second-half foul limit (4) in Q3.
+    fatigue = _FakeFatigue({1: 4, 2: 4})
+    result = coach.should_switch_intensity(
+        on_court=on_court, fatigue_tracker=fatigue, quarter=3, total_possessions=50,
+    )
+    assert result is DefensiveIntensity.SAFE
+
+
+def test_intensity_reverts_to_baseline_when_clear():
+    coach = CpuCoach(cpu_side=Side.AWAY, personality=CpuPersonality.AGGRESSIVE)
+    coach.current_intensity = DefensiveIntensity.SAFE  # was protecting foul-trouble
+    on_court = [_player(i, f"P{i}") for i in range(1, 6)]
+    result = coach.should_switch_intensity(
+        on_court=on_court, fatigue_tracker=_FakeFatigue({}), quarter=3,
+        total_possessions=50,
+    )
+    assert result is DefensiveIntensity.TIGHT  # aggressive baseline
+
+
+def test_intensity_respects_cooldown():
+    coach = CpuCoach(cpu_side=Side.AWAY, personality=CpuPersonality.BALANCED)
+    coach._last_intensity_poss = 48
+    on_court = [_player(i, f"P{i}") for i in range(1, 6)]
+    result = coach.should_switch_intensity(
+        on_court=on_court, fatigue_tracker=_FakeFatigue({1: 4, 2: 4}),
+        quarter=3, total_possessions=50,  # only 2 possessions since last switch
+    )
+    assert result is None
 
 
 def _make_coach(personality=CpuPersonality.BALANCED, current_scheme=DefensiveScheme.MAN):
@@ -660,14 +720,24 @@ def test_cpu_no_hurry_up_when_leading():
     assert result is not OffensiveScheme.HURRY_UP
 
 
-def test_cpu_slow_down_when_leading_late():
-    """Q4, 100s left, leading by 10 -> SLOW_DOWN."""
+def test_cpu_stall_when_leading_big_late():
+    """Q4, 100s left, comfortable lead of 10 -> STALL (kill the clock)."""
     coach = _make_coach()
     result = coach.should_switch_off_scheme(
         quarter=4, seconds_left=100, cpu_score=60, opp_score=50,
         opp_def_scheme=DefensiveScheme.MAN, total_possessions=80,
     )
-    assert result is OffensiveScheme.SLOW_DOWN
+    assert result is OffensiveScheme.STALL
+
+
+def test_cpu_semistall_when_leading_moderate_late():
+    """Q4, 100s left, moderate lead of 6 -> SEMISTALL."""
+    coach = _make_coach()
+    result = coach.should_switch_off_scheme(
+        quarter=4, seconds_left=100, cpu_score=56, opp_score=50,
+        opp_def_scheme=DefensiveScheme.MAN, total_possessions=80,
+    )
+    assert result is OffensiveScheme.SEMISTALL
 
 
 def test_cpu_three_point_vs_zone():
@@ -706,10 +776,10 @@ def test_cpu_revert_hurry_up_when_deficit_shrinks():
     assert result is OffensiveScheme.NORMAL
 
 
-def test_cpu_revert_slow_down_when_lead_shrinks():
-    """Set current_off_scheme=SLOW_DOWN, lead 1 -> NORMAL."""
+def test_cpu_revert_semistall_when_lead_shrinks():
+    """Set current_off_scheme=SEMISTALL, lead 1 -> NORMAL."""
     coach = _make_coach()
-    coach.current_off_scheme = OffensiveScheme.SLOW_DOWN
+    coach.current_off_scheme = OffensiveScheme.SEMISTALL
     result = coach.should_switch_off_scheme(
         quarter=4, seconds_left=100, cpu_score=61, opp_score=60,
         opp_def_scheme=DefensiveScheme.MAN, total_possessions=80,

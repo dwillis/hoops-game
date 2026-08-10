@@ -39,7 +39,13 @@ from hoops.engine.fatigue import (
 from hoops.engine.lineup_rates import compute_lineup_rates
 from hoops.engine.machine import _player_name, _star_player_ids, simulate_possession
 from hoops.engine.matchup import adjust_offense, apply_hca
-from hoops.engine.policy import CoachPolicies, CoachPolicy, DefensiveScheme, OffensiveScheme
+from hoops.engine.policy import (
+    CoachPolicies,
+    CoachPolicy,
+    DefensiveIntensity,
+    DefensiveScheme,
+    OffensiveScheme,
+)
 from hoops.engine.scheme_affinity import detect_archetype
 from hoops.engine.state import GameState, Side
 from hoops.rules import Rules
@@ -79,25 +85,37 @@ def _attribute_possession(
                 assister_name = assister.name
                 ev = dataclasses.replace(ev, assist_by=assister_name)
 
+        # Steal / block are woven into the primary event (stolen_by /
+        # blocked_by) *before* it's appended so the line reads as one
+        # sentence; RNG call order is unchanged from the credit-only version.
+        if ev.type == "shot_missed" and ev.team is not None:
+            fouled = next_e is not None and next_e.type == "foul_shooting"
+            blocker_name = None
+            if not fouled and rng.random() < _BLOCK_PROB:
+                blocker_name = lineup._adhoc(ev.team.other).blocker(rng).name
+            if blocker_name is not None:
+                ev = dataclasses.replace(ev, blocked_by=blocker_name)
+            out.append(ev)
+            if blocker_name is not None:
+                out.append(_credit_event(ev, "block", ev.team.other, blocker_name))
+            continue
+
+        if ev.type == "turnover" and ev.team is not None:
+            steal_prob = 0.75 if "double_team" in (ev.detail or "") else _STEAL_PROB
+            stealer_name = None
+            if rng.random() < steal_prob:
+                stealer_name = lineup._adhoc(ev.team.other).stealer(rng).name
+            if stealer_name is not None:
+                ev = dataclasses.replace(ev, stolen_by=stealer_name)
+            out.append(ev)
+            if stealer_name is not None:
+                out.append(_credit_event(ev, "steal", ev.team.other, stealer_name))
+            continue
+
         out.append(ev)
 
         if assister_name is not None:
             out.append(_credit_event(ev, "assist", ev.team, assister_name))
-
-        if ev.type == "shot_missed" and ev.team is not None:
-            fouled = next_e is not None and next_e.type == "foul_shooting"
-            if not fouled and rng.random() < _BLOCK_PROB:
-                def_side = ev.team.other
-                adhoc = lineup._adhoc(def_side)
-                blocker = adhoc.blocker(rng)
-                out.append(_credit_event(ev, "block", def_side, blocker.name))
-
-        if ev.type == "turnover" and ev.team is not None:
-            if rng.random() < _STEAL_PROB:
-                def_side = ev.team.other
-                adhoc = lineup._adhoc(def_side)
-                stealer = adhoc.stealer(rng)
-                out.append(_credit_event(ev, "steal", def_side, stealer.name))
 
     return out
 
@@ -112,18 +130,31 @@ def _serialize_event(e: Event) -> dict:
         "home_score": e.home_score,
         "away_score": e.away_score,
         "player": e.player,
+        "assist_by": e.assist_by,
+        "stolen_by": e.stolen_by,
+        "blocked_by": e.blocked_by,
     }
 
 
 def _serialize_policy(p: CoachPolicy) -> dict:
     return {
         "scheme": p.scheme.value,
+        "intensity": p.intensity.value,
         "off_scheme": p.off_scheme.value,
         "two_for_one": p.two_for_one,
         "hold_for_last": p.hold_for_last,
         "foul_when_down_3": p.foul_when_down_3,
         "intentional_foul_in_bonus_when_trailing": p.intentional_foul_in_bonus_when_trailing,
         "timeouts_remaining": p.timeouts_remaining,
+        "shot_distribution": (
+            {str(k): v for k, v in p.shot_distribution.items()}
+            if p.shot_distribution else None
+        ),
+        "double_team_pct": p.double_team_pct,
+        "man_assignments": (
+            {str(k): v for k, v in p.man_assignments.items()}
+            if p.man_assignments else None
+        ),
     }
 
 
@@ -137,12 +168,16 @@ def _deserialize_event(d: dict) -> Event:
         home_score=d.get("home_score", 0),
         away_score=d.get("away_score", 0),
         player=d.get("player"),
+        assist_by=d.get("assist_by"),
+        stolen_by=d.get("stolen_by"),
+        blocked_by=d.get("blocked_by"),
     )
 
 
 def _deserialize_policy(d: dict) -> CoachPolicy:
     return CoachPolicy(
         scheme=DefensiveScheme(d["scheme"]),
+        intensity=DefensiveIntensity(d.get("intensity", "normal")),
         off_scheme=OffensiveScheme(d.get("off_scheme", "normal")),
         two_for_one=d.get("two_for_one", True),
         hold_for_last=d.get("hold_for_last", True),
@@ -151,6 +186,15 @@ def _deserialize_policy(d: dict) -> CoachPolicy:
             "intentional_foul_in_bonus_when_trailing", False
         ),
         timeouts_remaining=d.get("timeouts_remaining", 4),
+        shot_distribution=(
+            {int(k): v for k, v in d["shot_distribution"].items()}
+            if d.get("shot_distribution") else None
+        ),
+        double_team_pct=d.get("double_team_pct", 0.0),
+        man_assignments=(
+            {int(k): int(v) for k, v in d["man_assignments"].items()}
+            if d.get("man_assignments") else None
+        ),
     )
 
 
@@ -259,6 +303,9 @@ class InteractiveGame:
                     def_efg=cpu_priors.def_efg,
                 ),
             )
+            # Reflect the coach's opening intensity (TIGHT for AGGRESSIVE) in
+            # its policy so the very first possession already uses it.
+            self._set_cpu_intensity(self.cpu_coach.current_intensity)
         else:
             self.cpu_coach = None
 
@@ -312,6 +359,58 @@ class InteractiveGame:
     def set_human_off_scheme(self, scheme: OffensiveScheme) -> None:
         assert self.human_side is not None, "use set_off_scheme() in H2H mode"
         self.set_off_scheme(self.human_side, scheme)
+
+    def set_intensity(self, side: Side, intensity: DefensiveIntensity) -> None:
+        """Set defensive intensity for the given side (works in any mode).
+
+        Intensity is applied per-possession in ``apply_scheme`` and does not
+        feed the lineup-rate blend, so no lineup recompute is needed."""
+        old = self.policies.for_side(side)
+        self._replace_policy(side, dataclasses.replace(old, intensity=intensity))
+
+    def set_human_intensity(self, intensity: DefensiveIntensity) -> None:
+        assert self.human_side is not None, "use set_intensity() in H2H mode"
+        self.set_intensity(self.human_side, intensity)
+
+    def _set_cpu_intensity(self, intensity: DefensiveIntensity) -> None:
+        """Change the CPU side's defensive intensity."""
+        old = self.cpu_policy()
+        self._replace_policy(self.cpu_side, dataclasses.replace(old, intensity=intensity))
+
+    def set_shot_distribution(
+        self, side: Side, distribution: dict[int, float] | None
+    ) -> None:
+        """Set coach ball-distribution shares for a side (works in any mode).
+
+        Feeds ``compute_lineup_rates`` so a recompute is required."""
+        old = self.policies.for_side(side)
+        self._replace_policy(side, dataclasses.replace(old, shot_distribution=distribution))
+        self._recompute_lineup_rates()
+
+    def set_human_shot_distribution(self, distribution: dict[int, float] | None) -> None:
+        assert self.human_side is not None, "use set_shot_distribution() in H2H mode"
+        self.set_shot_distribution(self.human_side, distribution)
+
+    def set_double_team_pct(self, side: Side, pct: float) -> None:
+        """Set double-team probability for a side (applied per-possession)."""
+        pct = max(0.0, min(1.0, pct))
+        old = self.policies.for_side(side)
+        self._replace_policy(side, dataclasses.replace(old, double_team_pct=pct))
+
+    def set_human_double_team_pct(self, pct: float) -> None:
+        assert self.human_side is not None, "use set_double_team_pct() in H2H mode"
+        self.set_double_team_pct(self.human_side, pct)
+
+    def set_man_assignments(
+        self, side: Side, assignments: dict[int, int] | None
+    ) -> None:
+        """Set man-to-man matchups for a side (applied per-possession in MAN)."""
+        old = self.policies.for_side(side)
+        self._replace_policy(side, dataclasses.replace(old, man_assignments=assignments))
+
+    def set_human_man_assignments(self, assignments: dict[int, int] | None) -> None:
+        assert self.human_side is not None, "use set_man_assignments() in H2H mode"
+        self.set_man_assignments(self.human_side, assignments)
 
     def _set_cpu_scheme(self, scheme: DefensiveScheme) -> None:
         """Change the CPU side's defensive scheme."""
@@ -694,6 +793,26 @@ class InteractiveGame:
             self._set_cpu_scheme(new_scheme)
             self.cpu_coach.apply_scheme_switch(new_scheme, total_poss)
 
+        # CPU defensive intensity evaluation (foul-trouble aware).
+        new_intensity = self.cpu_coach.should_switch_intensity(
+            on_court=self.lineup.on_court(self.cpu_side),
+            fatigue_tracker=self.fatigue,
+            quarter=self.state.quarter,
+            total_possessions=total_poss,
+        )
+        if new_intensity is not None:
+            self._set_cpu_intensity(new_intensity)
+            self.cpu_coach.apply_intensity_switch(new_intensity, total_poss)
+
+        # CPU double-team evaluation (trap a hot opposing scorer).
+        new_dt = self.cpu_coach.should_double_team(
+            opp_on_court=self.lineup.on_court(self.human_side),
+            total_possessions=total_poss,
+        )
+        if new_dt is not None:
+            self.set_double_team_pct(self.cpu_side, new_dt)
+            self.cpu_coach.apply_double_team_switch(new_dt, total_poss)
+
         # CPU offensive scheme evaluation.
         opp_def_scheme = self.policies.for_side(self.cpu_side.other).scheme
         new_off_scheme = self.cpu_coach.should_switch_off_scheme(
@@ -815,15 +934,17 @@ class InteractiveGame:
         return events
 
     def _recompute_lineup_rates(self) -> None:
-        home_scheme = self.policies.for_side(Side.HOME).scheme
-        away_scheme = self.policies.for_side(Side.AWAY).scheme
+        home_policy = self.policies.for_side(Side.HOME)
+        away_policy = self.policies.for_side(Side.AWAY)
         self._home_lr = compute_lineup_rates(
             self.lineup.on_court(Side.HOME), self.home_priors,
-            fatigue_tracker=self.fatigue, scheme=home_scheme,
+            fatigue_tracker=self.fatigue, scheme=home_policy.scheme,
+            shot_distribution=home_policy.shot_distribution,
         )
         self._away_lr = compute_lineup_rates(
             self.lineup.on_court(Side.AWAY), self.away_priors,
-            fatigue_tracker=self.fatigue, scheme=away_scheme,
+            fatigue_tracker=self.fatigue, scheme=away_policy.scheme,
+            shot_distribution=away_policy.shot_distribution,
         )
 
     def to_save_dict(self) -> dict:
@@ -870,8 +991,12 @@ class InteractiveGame:
                 "personality": self.cpu_coach.personality.value,
                 "current_scheme": self.cpu_coach.current_scheme.value,
                 "current_off_scheme": self.cpu_coach.current_off_scheme.value,
+                "current_intensity": self.cpu_coach.current_intensity.value,
+                "current_double_team_pct": self.cpu_coach.current_double_team_pct,
                 "last_scheme_poss": self.cpu_coach._last_scheme_poss,
                 "last_off_scheme_poss": self.cpu_coach._last_off_scheme_poss,
+                "last_intensity_poss": self.cpu_coach._last_intensity_poss,
+                "last_double_team_poss": self.cpu_coach._last_double_team_poss,
                 "trend": self.cpu_coach.trend.to_list(),
             } if self.cpu_coach is not None else None,
         }
@@ -989,9 +1114,13 @@ class InteractiveGame:
                     personality=CpuPersonality(cc["personality"]),
                     current_scheme=DefensiveScheme(cc["current_scheme"]),
                     current_off_scheme=OffensiveScheme(cc.get("current_off_scheme", "normal")),
+                    current_intensity=DefensiveIntensity(cc.get("current_intensity", "normal")),
                 )
+                game.cpu_coach.current_double_team_pct = cc.get("current_double_team_pct", 0.0)
                 game.cpu_coach._last_scheme_poss = cc.get("last_scheme_poss", 0)
                 game.cpu_coach._last_off_scheme_poss = cc.get("last_off_scheme_poss", 0)
+                game.cpu_coach._last_intensity_poss = cc.get("last_intensity_poss", 0)
+                game.cpu_coach._last_double_team_poss = cc.get("last_double_team_poss", 0)
                 game.cpu_coach.trend = TrendTracker.from_list(cc.get("trend", []))
             else:
                 # Backwards compat: old saves without cpu_coach.

@@ -9,6 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
+from hoops.engine import vocabulary
 from hoops.engine.state import Side
 
 EventType = Literal[
@@ -51,6 +52,14 @@ class Event:
     """Name of the assisting player, set on a ``shot_made`` event so the
     play-by-play line can render "made layup (Name assist)" on one line.
     The standalone ``assist`` event is still emitted for box-score totals."""
+    stolen_by: str | None = None
+    """Name of the stealing defender, set on a ``turnover`` event so the
+    line reads as a live-ball steal ("X has the ball knocked away by Y").
+    The standalone ``steal`` event is still emitted for box-score totals."""
+    blocked_by: str | None = None
+    """Name of the blocking defender, set on a ``shot_missed`` event so the
+    line reads "X shoots; it's blocked by Y". The standalone ``block``
+    event is still emitted for box-score totals."""
 
 
 def fmt_clock(seconds_left: int) -> str:
@@ -80,6 +89,11 @@ def _phrase(e: Event, team_label: str = "") -> str:
     ``team_label`` is the short team name used as fallback actor when no
     player is attributed (e.g. "MD defensive rebound").
     """
+    # Flavored DOS-style phrasing when a player is attributed; falls
+    # through to the terse phrasing below otherwise.
+    flavored = vocabulary.phrase_for(e)
+    if flavored is not None:
+        return flavored
     actor = e.player or team_label
     if e.type == "tip_off":
         return "Tip-off"

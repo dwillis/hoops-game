@@ -18,7 +18,12 @@ from hoops.engine.fatigue import (
     foul_trouble_limit,
     player_importance,
 )
-from hoops.engine.policy import CoachPolicy, DefensiveScheme, OffensiveScheme
+from hoops.engine.policy import (
+    CoachPolicy,
+    DefensiveIntensity,
+    DefensiveScheme,
+    OffensiveScheme,
+)
 from hoops.engine.scheme_affinity import detect_archetype
 from hoops.engine.state import Side
 
@@ -142,15 +147,125 @@ class CpuCoach:
         personality: CpuPersonality,
         current_scheme: DefensiveScheme = DefensiveScheme.MAN,
         current_off_scheme: OffensiveScheme = OffensiveScheme.NORMAL,
+        current_intensity: DefensiveIntensity | None = None,
         window: int = 10,
     ) -> None:
         self.cpu_side = cpu_side
         self.personality = personality
         self.current_scheme = current_scheme
         self.current_off_scheme = current_off_scheme
+        # AGGRESSIVE coaches open in a tighter defense by default.
+        if current_intensity is None:
+            current_intensity = (
+                DefensiveIntensity.TIGHT
+                if personality is CpuPersonality.AGGRESSIVE
+                else DefensiveIntensity.NORMAL
+            )
+        self.current_intensity = current_intensity
+        self.current_double_team_pct: float = 0.0
         self.trend = TrendTracker(window=window)
         self._last_scheme_poss: int = 0
         self._last_off_scheme_poss: int = 0
+        self._last_intensity_poss: int = 0
+        self._last_double_team_poss: int = 0
+
+    def should_switch_intensity(
+        self,
+        on_court: list[Player],
+        fatigue_tracker: FatigueTracker | None,
+        quarter: int,
+        total_possessions: int,
+    ) -> DefensiveIntensity | None:
+        """Return a new defensive intensity if rules trigger, else None.
+
+        Drops to SAFE when 2+ on-court players are in foul trouble (protect
+        them from fouling out); otherwise reverts to the personality baseline.
+        Respects the shared scheme cooldown."""
+        if total_possessions - self._last_intensity_poss < _SCHEME_COOLDOWN:
+            return None
+
+        baseline = (
+            DefensiveIntensity.TIGHT
+            if self.personality is CpuPersonality.AGGRESSIVE
+            else DefensiveIntensity.NORMAL
+        )
+
+        in_foul_trouble = 0
+        if fatigue_tracker is not None:
+            # rank does not affect the limit value; pass 0.
+            limit = foul_trouble_limit(quarter, 0)
+            for p in on_court:
+                if fatigue_tracker.fouls(p.player_id) >= limit:
+                    in_foul_trouble += 1
+
+        if in_foul_trouble >= 2:
+            if self.current_intensity is not DefensiveIntensity.SAFE:
+                return DefensiveIntensity.SAFE
+            return None
+
+        # No longer in foul trouble: return to the personality baseline.
+        if self.current_intensity is not baseline:
+            return baseline
+        return None
+
+    def apply_intensity_switch(
+        self, intensity: DefensiveIntensity, total_possessions: int
+    ) -> None:
+        """Record that an intensity switch happened."""
+        self.current_intensity = intensity
+        self._last_intensity_poss = total_possessions
+
+    _DOUBLE_TEAM_HOT_POINTS = {
+        CpuPersonality.AGGRESSIVE: 8,
+        CpuPersonality.BALANCED: 10,
+        CpuPersonality.CONSERVATIVE: 12,
+    }
+    _DOUBLE_TEAM_PCT = {
+        CpuPersonality.AGGRESSIVE: 0.6,
+        CpuPersonality.BALANCED: 0.5,
+        CpuPersonality.CONSERVATIVE: 0.3,
+    }
+
+    def should_double_team(
+        self,
+        opp_on_court: list[Player],
+        total_possessions: int,
+    ) -> float | None:
+        """Return a new double-team pct if a rule triggers, else None.
+
+        Starts doubling when an opponent gets hot (window points >= a
+        personality threshold); stops when the double is being punished
+        (opponent scored 4+ of their last 6) or the star cools off. Shares
+        the scheme cooldown."""
+        if total_possessions - self._last_double_team_poss < _SCHEME_COOLDOWN:
+            return None
+
+        threshold = self._DOUBLE_TEAM_HOT_POINTS[self.personality]
+        hot_pts = max(
+            (self.trend.points_by_player(p.name) for p in opp_on_court),
+            default=0,
+        )
+        opp_side = self.cpu_side.other
+        opp_recent = [s for s in self.trend.recent if s.side is opp_side][-6:]
+        opp_scored = sum(1 for s in opp_recent if s.scored)
+
+        if self.current_double_team_pct > 0.0:
+            # Active: back off if the help defense is getting torched, or the
+            # hot hand has cooled to under half the trigger.
+            if len(opp_recent) >= 6 and opp_scored >= 4:
+                return 0.0
+            if hot_pts < threshold / 2:
+                return 0.0
+            return None
+
+        if hot_pts >= threshold:
+            return self._DOUBLE_TEAM_PCT[self.personality]
+        return None
+
+    def apply_double_team_switch(self, pct: float, total_possessions: int) -> None:
+        """Record that a double-team change happened."""
+        self.current_double_team_pct = pct
+        self._last_double_team_poss = total_possessions
 
     def should_switch_scheme(
         self,
@@ -234,8 +349,13 @@ class CpuCoach:
             if deficit <= 3:
                 return OffensiveScheme.NORMAL
 
-        if self.current_off_scheme is OffensiveScheme.SLOW_DOWN:
+        if self.current_off_scheme is OffensiveScheme.SEMISTALL:
             if lead <= 2:
+                return OffensiveScheme.NORMAL
+
+        if self.current_off_scheme is OffensiveScheme.STALL:
+            # Loosen the full stall once the lead is no longer comfortable.
+            if lead <= 4:
                 return OffensiveScheme.NORMAL
 
         if self.current_off_scheme is OffensiveScheme.THREE_POINT:
@@ -252,10 +372,15 @@ class CpuCoach:
             if self.current_off_scheme is not OffensiveScheme.HURRY_UP:
                 return OffensiveScheme.HURRY_UP
 
-        # --- SLOW_DOWN: Q4+, leading by 5+, <=120s ---
+        # --- STALL: Q4+, comfortable lead (8+), <=180s: kill the clock ---
+        if quarter >= 4 and lead >= 8 and seconds_left <= 180:
+            if self.current_off_scheme is not OffensiveScheme.STALL:
+                return OffensiveScheme.STALL
+
+        # --- SEMISTALL: Q4+, moderate lead (5-7), <=120s ---
         if quarter >= 4 and lead >= 5 and seconds_left <= 120:
-            if self.current_off_scheme is not OffensiveScheme.SLOW_DOWN:
-                return OffensiveScheme.SLOW_DOWN
+            if self.current_off_scheme is not OffensiveScheme.SEMISTALL:
+                return OffensiveScheme.SEMISTALL
 
         # --- THREE_POINT: opponent in ZONE; OR scored 0 in last 4 CPU possessions while NORMAL ---
         if opp_def_scheme is DefensiveScheme.ZONE:
