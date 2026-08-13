@@ -39,7 +39,6 @@ _MADE = {
         ("puts it up and in", 4),
         ("finishes in traffic", 3),
         ("scores on a putback", 2),
-        ("scores on a goaltend", 1),  # ~1%
     ],
     "mid": [
         ("hits from {dist}", 5),
